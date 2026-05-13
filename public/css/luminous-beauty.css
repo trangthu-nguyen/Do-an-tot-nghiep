@@ -1,0 +1,150 @@
+/* ==============================
+   LUMINOUS BEAUTY - CLEAN VERSION
+   Primary: #7b5554 | Surface: #faf9f9
+   ============================== */
+
+:root {
+    --primary: #7b5554;
+    --primary-dark: #684847;
+    --primary-light: #ebbab9;
+
+    --surface: #faf9f9;
+    --surface-low: #f4f3f3;
+    --surface-container: #efeded;
+    --surface-high: #e9e8e8;
+
+    --text: #1b1c1c;
+    --text-muted: #504443;
+    --text-soft: #766c6c;
+
+    --outline: #d4c2c2;
+    --outline-variant: #827473;
+
+    --shadow: rgba(123, 85, 84, 0.12);
+    --shadow-lg: rgba(123, 85, 84, 0.18);
+}
+
+/* ==============================
+   BASE
+   ============================== */
+body {
+    background: var(--surface) !important;
+    color: var(--text);
+    font-family: 'Manrope', system-ui, sans-serif;
+}
+
+h1, h2, h3, h4, h5, .h1, .h2, .h3 {
+    font-family: 'Noto Serif', serif;
+    color: #2f2323;
+}
+
+/* ==============================
+   NAVBAR
+   ============================== */
+.navbar-custom {
+    background: rgba(255,255,255,0.95) !important;
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--outline);
+}
+
+.nav-link {
+    color: var(--text-soft) !important;
+    font-weight: 600;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: var(--primary) !important;
+}
+
+/* ==============================
+   CARDS & BOXES
+   ============================== */
+.card, .box-card, .service-main-card, .process-box {
+    background: white !important;
+    border-radius: 24px !important;
+    border: 1px solid var(--outline) !important;
+    box-shadow: 0 12px 40px var(--shadow) !important;
+}
+
+.service-hero {
+    border-radius: 32px !important;
+    overflow: hidden;
+    box-shadow: 0 20px 50px var(--shadow-lg) !important;
+}
+
+/* ==============================
+   BUTTONS
+   ============================== */
+.btn-booking, .btn-primary-ui, .btn-dark {
+    background: var(--primary) !important;
+    color: white !important;
+    border-radius: 9999px !important;
+    font-weight: 700;
+    border: none !important;
+}
+
+.btn-booking:hover, .btn-primary-ui:hover {
+    background: var(--primary-dark) !important;
+}
+
+.btn-outline-ui {
+    border: 2px solid var(--outline) !important;
+    color: var(--primary) !important;
+    border-radius: 9999px !important;
+    background: white !important;
+}
+
+/* ==============================
+   FORM & INPUT
+   ============================== */
+.form-control, .form-select, textarea {
+    border-radius: 18px !important;
+    border: 1px solid var(--outline) !important;
+    padding: 12px 16px;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 4px rgba(123,85,84,0.15) !important;
+}
+
+/* ==============================
+   DATE & TIME PICKER
+   ============================== */
+.date-item, .time-slot {
+    border: 2px solid var(--outline) !important;
+    border-radius: 18px !important;
+    background: white !important;
+    transition: all 0.3s;
+}
+
+.date-item.active, .time-slot.active {
+    background: var(--primary) !important;
+    color: white !important;
+    border-color: var(--primary) !important;
+}
+
+/* ==============================
+   MODAL
+   ============================== */
+.modal-content {
+    border-radius: 26px !important;
+    border: 1px solid var(--outline) !important;
+    box-shadow: 0 25px 70px var(--shadow-lg) !important;
+}
+
+/* ==============================
+   ALERTS
+   ============================== */
+.alert-success {
+    background: rgba(46,125,50,0.1) !important;
+    border-color: rgba(46,125,50,0.3) !important;
+    color: #2e7d32 !important;
+}
+
+.alert-danger {
+    background: rgba(186,26,26,0.08) !important;
+    border-color: rgba(186,26,26,0.25) !important;
+    color: #ba1a1a !important;
+}
