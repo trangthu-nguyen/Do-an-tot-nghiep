@@ -18,7 +18,72 @@
     .noti-subtitle{
         color:#7d7272;
         font-weight:600;
+        margin-bottom:0;
+    }
+
+    .noti-header{
+        display:flex;
+        justify-content:space-between;
+        align-items:flex-start;
+        gap:18px;
+        flex-wrap:wrap;
         margin-bottom:26px;
+    }
+
+    .btn-read-all{
+        border:none;
+        background:#7b5554;
+        color:white;
+        border-radius:999px;
+        padding:11px 18px;
+        font-weight:900;
+        font-size:13px;
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        transition:0.25s;
+        box-shadow:0 10px 25px rgba(123,85,84,0.12);
+    }
+
+    .btn-read-all:hover{
+        background:#684847;
+        transform:translateY(-2px);
+    }
+
+    .btn-read-all-disabled{
+        border:1px solid #eadede;
+        background:white;
+        color:#9b8f8f;
+        border-radius:999px;
+        padding:11px 18px;
+        font-weight:900;
+        font-size:13px;
+        display:inline-flex;
+        align-items:center;
+        gap:8px;
+        cursor:not-allowed;
+    }
+
+    .noti-tabs{
+        display:flex;
+        gap:10px;
+        flex-wrap:wrap;
+        margin-bottom:18px;
+    }
+
+    .noti-tab{
+        padding:9px 15px;
+        border-radius:999px;
+        border:1px solid #eadede;
+        background:white;
+        color:#7b5554;
+        font-weight:900;
+        font-size:13px;
+    }
+
+    .noti-tab.active{
+        background:rgba(235,186,185,0.32);
+        border-color:rgba(123,85,84,0.18);
     }
 
     .noti-list{
@@ -122,11 +187,54 @@
         color:#7d7272;
         font-weight:800;
     }
+
+    @media(max-width:768px){
+        .noti-card{
+            flex-direction:column;
+        }
+    }
 </style>
 
-<div class="noti-title">Thông báo nhân viên</div>
-<div class="noti-subtitle">
-    Các thông báo liên quan đến lịch đặt, phân công nhân viên và trạng thái lịch hẹn.
+@php
+    $unreadCount = $notifications->where('is_read', 0)->count();
+@endphp
+
+<div class="noti-header">
+
+    <div>
+        <div class="noti-title">Thông báo nhân viên</div>
+        <div class="noti-subtitle">
+            Các thông báo liên quan đến lịch đặt, phân công nhân viên và trạng thái lịch hẹn.
+        </div>
+    </div>
+
+    @if($unreadCount > 0)
+        <form action="{{ route('staff.notifications.readAll') }}" method="POST">
+            @csrf
+            <button type="submit" class="btn-read-all">
+                <i class="bi bi-check2-all"></i>
+                Đánh dấu tất cả đã đọc
+            </button>
+        </form>
+    @else
+        <button class="btn-read-all-disabled" disabled>
+            <i class="bi bi-check2-all"></i>
+            Tất cả đã đọc
+        </button>
+    @endif
+
+</div>
+
+<div class="noti-tabs">
+    <div class="noti-tab active">
+        Tất cả
+    </div>
+
+    @if($unreadCount > 0)
+        <div class="noti-tab">
+            Chưa đọc: {{ $unreadCount }}
+        </div>
+    @endif
 </div>
 
 @if($notifications->count() == 0)

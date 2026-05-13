@@ -50,7 +50,24 @@
         color: var(--primary-dark);
     }
 
-    /* Tabs */
+    .btn-read-all-dark {
+        background: var(--primary);
+        border: none;
+        color: white;
+        padding: 10px 18px;
+        border-radius: 999px;
+        font-weight: 800;
+        font-size: 14px;
+        transition: 0.25s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-read-all-dark:hover {
+        background: var(--primary-dark);
+    }
+
     .notify-tabs {
         display: flex;
         gap: 10px;
@@ -76,7 +93,6 @@
         border-color: var(--primary);
     }
 
-    /* Notification Card */
     .notify-card {
         background: rgba(255, 255, 255, 0.95);
         border-radius: 22px;
@@ -97,7 +113,6 @@
         box-shadow: 0 22px 55px rgba(123, 85, 84, 0.14);
     }
 
-    /* unread dot */
     .notify-dot {
         width: 10px;
         height: 10px;
@@ -212,21 +227,50 @@
     }
 </style>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="page-title mb-0">Thông báo</h3>
+@php
+    $unreadCount = $notifications->where('is_read', 0)->count();
+@endphp
 
-    <a href="{{ route('customer.notifications.index') }}" class="btn-read-all">
-        <i class="bi bi-arrow-clockwise"></i> Làm mới
-    </a>
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+        <h3 class="page-title mb-1">Thông báo</h3>
+        <div class="text-muted fw-semibold">
+            Cập nhật mới nhất về lịch đặt và thanh toán
+        </div>
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap">
+
+        <a href="{{ route('customer.notifications.index') }}" class="btn-read-all">
+            <i class="bi bi-arrow-clockwise"></i>
+            Làm mới
+        </a>
+
+        @if($unreadCount > 0)
+            <form action="{{ route('customer.notifications.readAll') }}" method="POST">
+                @csrf
+                <button type="submit" class="btn-read-all-dark">
+                    <i class="bi bi-check2-all"></i>
+                    Đánh dấu tất cả đã đọc
+                </button>
+            </form>
+        @endif
+
+    </div>
 </div>
 
-{{-- Tabs giả giống app mobile --}}
 <div class="notify-tabs">
-    <div class="notify-tab active">Tất cả</div>
-    
+    <div class="notify-tab active">
+        Tất cả
+    </div>
+
+    @if($unreadCount > 0)
+        <div class="notify-tab">
+            Chưa đọc: {{ $unreadCount }}
+        </div>
+    @endif
 </div>
 
-{{-- Alert --}}
 @if(session('success'))
     <div class="alert alert-success">
         {{ session('success') }}
@@ -239,30 +283,28 @@
     </div>
 @endif
 
-{{-- List Notifications --}}
 @if($notifications->count() == 0)
+
     <div class="empty-box">
         Bạn chưa có thông báo nào.
     </div>
+
 @else
 
     @foreach($notifications as $notify)
 
         <div class="notify-card">
 
-            {{-- Dot unread --}}
             @if($notify->is_read == 0)
                 <div class="notify-dot"></div>
             @endif
 
             <div class="notify-left">
 
-                {{-- Icon --}}
                 <div class="notify-icon">
                     <i class="bi bi-bell-fill"></i>
                 </div>
 
-                {{-- Content --}}
                 <div style="flex:1;">
                     <div class="notify-title">
                         {{ $notify->title }}
@@ -279,7 +321,6 @@
 
             </div>
 
-            {{-- Actions --}}
             <div class="notify-actions">
 
                 @if($notify->is_read == 0)

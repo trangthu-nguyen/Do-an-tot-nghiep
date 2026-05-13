@@ -39,8 +39,7 @@ Route::get('/', function () {
 });
 
 
-// ================== PAYMENT INIT (ONLINE) ==================
-// Route này dùng cho popup đặt lịch khi khách chọn "Thanh toán trực tuyến"
+// ================== PAYMENT INIT ONLINE ==================
 Route::post('/payment/init', [CustomerPaymentController::class, 'init'])->name('payment.init');
 
 
@@ -80,7 +79,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
 // ================== CUSTOMER ROUTES ==================
 Route::prefix('customer')->name('customer.')->group(function () {
 
-    // ================== HOME (TOP 3 SERVICES MOST BOOKED) ==================
+    // ================== PUBLIC: KHÔNG CẦN ĐĂNG NHẬP ==================
+
     Route::get('/home', function () {
 
         $topServices = Service::select('services.*')
@@ -104,6 +104,8 @@ Route::prefix('customer')->name('customer.')->group(function () {
 
     })->name('home');
 
+    Route::get('/services', [CustomerServiceController::class, 'index'])->name('services.index');
+    Route::get('/services/{id}', [CustomerServiceController::class, 'show'])->name('services.show');
 
     // Register
     Route::get('/register', [CustomerAuthController::class, 'showRegisterForm'])->name('register');
@@ -117,7 +119,7 @@ Route::prefix('customer')->name('customer.')->group(function () {
     Route::post('/logout', [CustomerAuthController::class, 'logout'])->name('logout');
 
 
-    // Middleware Customer
+    // ================== PRIVATE: CẦN ĐĂNG NHẬP ==================
     Route::middleware(['customer_auth'])->group(function () {
 
         // Profile
@@ -129,13 +131,7 @@ Route::prefix('customer')->name('customer.')->group(function () {
         Route::get('/profile/address', [CustomerProfileController::class, 'address'])->name('profile.address');
         Route::post('/profile/address/update', [CustomerProfileController::class, 'updateAddress'])->name('profile.address.update');
 
-
-        // Services
-        Route::get('/services', [CustomerServiceController::class, 'index'])->name('services.index');
-        Route::get('/services/{id}', [CustomerServiceController::class, 'show'])->name('services.show');
-
-
-        // Booking (1 service = 1 booking)
+        // Booking
         Route::get('/bookings', [CustomerBookingController::class, 'index'])->name('bookings.index');
         Route::get('/bookings/{id}', [CustomerBookingController::class, 'show'])->name('bookings.show');
         Route::get('/bookings/create/{service_id}', [CustomerBookingController::class, 'create'])->name('bookings.create');
@@ -144,27 +140,27 @@ Route::prefix('customer')->name('customer.')->group(function () {
 
         Route::post('/bookings/{id}/cancel', [CustomerBookingController::class, 'cancel'])->name('bookings.cancel');
 
-
         // API lấy slot giờ trống
         Route::get('/bookings/available-slots', [CustomerBookingController::class, 'availableSlots'])->name('bookings.availableSlots');
-
 
         // Payment
         Route::get('/payments', [CustomerPaymentController::class, 'index'])->name('payments.index');
         Route::get('/payments/{booking_id}', [CustomerPaymentController::class, 'show'])->name('payments.show');
         Route::post('/payments/{booking_id}/pay', [CustomerPaymentController::class, 'pay'])->name('payments.pay');
 
-
         // Feedback
         Route::get('/feedback/create/{booking_id}', [CustomerFeedbackController::class, 'create'])->name('feedback.create');
         Route::post('/feedback/store', [CustomerFeedbackController::class, 'store'])->name('feedback.store');
         Route::get('/feedback/show/{booking_id}', [CustomerFeedbackController::class, 'show'])->name('feedback.show');
 
-
         // Notification
         Route::get('/notifications', [CustomerNotificationController::class, 'index'])->name('notifications.index');
-        Route::post('/notifications/{id}/read', [CustomerNotificationController::class, 'markAsRead'])->name('notifications.read');
 
+        Route::post('/notifications/read-all', [CustomerNotificationController::class, 'markAllAsRead'])
+            ->name('notifications.readAll');
+
+        Route::post('/notifications/{id}/read', [CustomerNotificationController::class, 'markAsRead'])
+            ->name('notifications.read');
     });
 });
 
@@ -175,11 +171,9 @@ Route::prefix('staff')->name('staff.')->group(function () {
     Route::get('/login', [StaffAuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [StaffAuthController::class, 'login'])->name('login.submit');
     Route::post('/logout', [StaffAuthController::class, 'logout'])->name('logout');
-    Route::get('/schedule-registration', function () {
-    return view('staff.bookings.schedule_registration');
-})->name('scheduleRegistration');
 
     Route::middleware(['staff_auth'])->group(function () {
+
         Route::get('/work-history', [StaffBookingController::class, 'workHistory'])->name('workHistory');
 
         Route::get('/profile', [StaffProfileController::class, 'index'])->name('profile.index');
@@ -195,15 +189,20 @@ Route::prefix('staff')->name('staff.')->group(function () {
         Route::post('/bookings/{id}/update-status', [StaffBookingController::class, 'updateStatus'])->name('bookings.updateStatus');
 
         Route::get('/notifications', [StaffNotificationController::class, 'index'])->name('notifications.index');
-        Route::post('/notifications/{id}/read', [StaffNotificationController::class, 'markAsRead'])->name('notifications.read');
-        
+
+        Route::post('/notifications/read-all', [StaffNotificationController::class, 'markAllAsRead'])
+            ->name('notifications.readAll');
+
+        Route::post('/notifications/{id}/read', [StaffNotificationController::class, 'markAsRead'])
+            ->name('notifications.read');
+
         Route::get('/schedule-registration', [StaffBookingController::class, 'scheduleRegistration'])
-    ->name('scheduleRegistration');
+            ->name('scheduleRegistration');
 
-Route::post('/schedule-registration/store', [StaffBookingController::class, 'storeSchedule'])
-    ->name('scheduleRegistration.store');
+        Route::post('/schedule-registration/store', [StaffBookingController::class, 'storeSchedule'])
+            ->name('scheduleRegistration.store');
 
-Route::post('/schedule-registration/busy', [StaffBookingController::class, 'markBusy'])
-    ->name('scheduleRegistration.busy');
+        Route::post('/schedule-registration/busy', [StaffBookingController::class, 'markBusy'])
+            ->name('scheduleRegistration.busy');
     });
 });

@@ -32,4 +32,16 @@ class NotificationController extends Controller
 
         return redirect()->back()->with('success', 'Đã đọc thông báo!');
     }
+
+    public function markAllAsRead()
+    {
+        Notification::where('user_type', 'staff')
+            ->where('user_id', session('staff_id'))
+            ->where('is_read', 0)
+            ->update([
+                'is_read' => 1
+            ]);
+
+        return redirect()->back()->with('success', 'Đã đánh dấu tất cả thông báo là đã đọc!');
+    }
 }
