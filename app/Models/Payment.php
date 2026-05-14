@@ -15,7 +15,8 @@ class Payment extends Model
         'payment_method',
         'amount',
         'payment_status',
-        'payment_date'
+        'payment_date',
+        'transaction_id',
     ];
 
     public function booking()

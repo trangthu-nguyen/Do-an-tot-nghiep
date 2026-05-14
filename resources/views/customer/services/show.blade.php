@@ -379,15 +379,18 @@
     }
 
     function selectPayment(method) {
-        paymentMethod = method;
+    paymentMethod = method;
 
-        if (method === 'online') {
-            bootstrap.Modal.getInstance(document.getElementById('bookingModal')).hide();
-            new bootstrap.Modal(document.getElementById('onlinePaymentModal')).show();
-        } else {
-            submitBooking();
-        }
+    if (method === 'cod') {
+        showStep(); // chỉ chọn phương thức, không submit ngay
+        return;
     }
+
+    if (method === 'online') {
+        bootstrap.Modal.getInstance(document.getElementById('bookingModal')).hide();
+        new bootstrap.Modal(document.getElementById('onlinePaymentModal')).show();
+    }
+}
 
     function selectOnlineMethod(el) {
         document.querySelectorAll('#onlinePaymentModal .payment-card').forEach(e => e.classList.remove('active'));

@@ -5,9 +5,6 @@
 @section('content')
 
 <style>
-
-    /* ================= HERO ================= */
-
     .hero-section{
         padding-top:30px;
         padding-bottom:110px;
@@ -93,8 +90,7 @@
         backdrop-filter:blur(16px);
         border-radius:28px;
         padding:22px;
-        box-shadow:
-            0 20px 40px rgba(123,85,84,0.08);
+        box-shadow:0 20px 40px rgba(123,85,84,0.08);
     }
 
     .floating-title{
@@ -125,8 +121,6 @@
         color:#7d7272;
         margin-top:8px;
     }
-
-    /* ================= FEATURED ================= */
 
     .featured-section{
         margin-top:80px;
@@ -219,8 +213,75 @@
         color:white;
     }
 
-    @media(max-width:991px){
+    .expert-section{
+        margin-top:95px;
+        padding:70px 0;
+        background:#f7f2f2;
+        border-radius:36px;
+    }
 
+    .expert-header{
+        text-align:center;
+        margin-bottom:42px;
+    }
+
+    .expert-card{
+        display:block;
+        text-decoration:none;
+        background:white;
+        border:1px solid #f1e7e7;
+        border-radius:24px;
+        padding:26px 20px;
+        text-align:center;
+        height:100%;
+        transition:0.3s;
+        box-shadow:0 12px 35px rgba(123,85,84,0.07);
+    }
+
+    .expert-card:hover{
+        transform:translateY(-6px);
+        box-shadow:0 18px 50px rgba(123,85,84,0.13);
+    }
+
+    .expert-avatar{
+        width:92px;
+        height:92px;
+        border-radius:50%;
+        object-fit:cover;
+        border:5px solid #f1dddd;
+        margin-bottom:16px;
+    }
+
+    .expert-name{
+        font-size:18px;
+        font-weight:900;
+        color:#2f2323;
+        margin-bottom:6px;
+        font-family:'Noto Serif', serif;
+    }
+
+    .expert-skill{
+        color:#7d7272;
+        font-size:13px;
+        font-weight:700;
+        min-height:20px;
+    }
+
+    .expert-stars{
+        color:#f5b301;
+        font-size:13px;
+        margin-top:10px;
+        letter-spacing:1px;
+    }
+
+    .expert-link{
+        margin-top:14px;
+        font-size:13px;
+        font-weight:900;
+        color:#7b5554;
+    }
+
+    @media(max-width:991px){
         .hero-title{
             font-size:48px;
         }
@@ -240,19 +301,16 @@
             font-size:40px;
         }
 
+        .expert-section{
+            border-radius:24px;
+            padding:50px 15px;
+        }
     }
-
 </style>
 
-<!-- ================= HERO ================= -->
-
 <div class="hero-section">
-
     <div class="row align-items-center">
-
-        <!-- LEFT -->
         <div class="col-lg-6">
-
             <div class="hero-badge">
                 ✨ Luxury Beauty At Home
             </div>
@@ -268,7 +326,6 @@
             </div>
 
             <div class="hero-actions">
-
                 <a href="{{ route('customer.services.index') }}"
                    class="btn-primary-home">
                     Đặt lịch ngay
@@ -278,11 +335,9 @@
                    class="btn-outline-home">
                     Xem dịch vụ
                 </a>
-
             </div>
 
             <div class="hero-stats">
-
                 <div>
                     <div class="hero-stat-number">10K+</div>
                     <div class="hero-stat-label">Khách hàng hài lòng</div>
@@ -297,19 +352,14 @@
                     <div class="hero-stat-number">4.9★</div>
                     <div class="hero-stat-label">Đánh giá trung bình</div>
                 </div>
-
             </div>
-
         </div>
 
-        <!-- RIGHT -->
         <div class="col-lg-6">
-
             <div class="hero-image-wrapper">
-
                 <img src="{{ asset('uploads/services/hero1.jpg') }}"
-     class="hero-image"
-     alt="BeautyHome Banner">
+                     class="hero-image"
+                     alt="BeautyHome Banner">
 
                 <div class="floating-card">
                     <div class="floating-title">
@@ -321,19 +371,12 @@
                         mang lại trải nghiệm spa chuẩn luxury.
                     </div>
                 </div>
-
             </div>
-
         </div>
-
     </div>
-
 </div>
 
-<!-- ================= FEATURED SERVICES (TOP 3 BOOKED) ================= -->
-
 <div class="featured-section">
-
     <div class="section-label">
         PREMIUM SERVICES
     </div>
@@ -347,9 +390,7 @@
     </div>
 
     <div class="row g-4">
-
         @forelse($topServices as $service)
-
             @php
                 $serviceImage = $service->image
                     ? asset('uploads/services/' . $service->image)
@@ -357,22 +398,17 @@
             @endphp
 
             <div class="col-lg-4">
-
                 <div class="featured-card">
-
                     <a href="{{ route('customer.services.show', $service->service_id) }}"
                        style="text-decoration:none;">
-
                         <img src="{{ $serviceImage }}"
                              class="featured-image"
                              alt="{{ $service->service_name }}">
                     </a>
 
                     <div class="featured-body">
-
                         <a href="{{ route('customer.services.show', $service->service_id) }}"
                            style="text-decoration:none;">
-
                             <h3 class="featured-name">
                                 {{ $service->service_name }}
                             </h3>
@@ -383,7 +419,6 @@
                         </div>
 
                         <div class="featured-bottom">
-
                             <div class="featured-price">
                                 {{ number_format($service->price) }}đ
                             </div>
@@ -392,27 +427,75 @@
                                class="btn-featured">
                                 Xem chi tiết
                             </a>
-
                         </div>
-
                     </div>
-
                 </div>
-
             </div>
-
         @empty
-
             <div class="col-12">
                 <div class="alert alert-info text-center">
                     Chưa có dịch vụ nổi bật.
                 </div>
             </div>
-
         @endforelse
-
     </div>
+</div>
 
+<div class="expert-section">
+    <div class="container">
+        <div class="expert-header">
+            <div class="section-label">
+                BEAUTY EXPERTS
+            </div>
+
+            <h2 class="section-title">
+                Chuyên gia tiêu biểu
+            </h2>
+
+            <div class="section-text mx-auto mb-0">
+                Những chuyên gia làm đẹp nổi bật luôn sẵn sàng mang đến trải nghiệm chăm sóc tận tâm và chuyên nghiệp.
+            </div>
+        </div>
+
+        <div class="row g-4 justify-content-center">
+            @forelse($experts as $expert)
+                @php
+                    $avatarId = ($expert->staff_id % 70) + 1;
+                @endphp
+
+                <div class="col-lg-3 col-md-6">
+                    <a href="{{ route('customer.experts.show', $expert->staff_id) }}"
+                       class="expert-card">
+                        <img src="https://i.pravatar.cc/160?img={{ $avatarId }}"
+                             class="expert-avatar"
+                             alt="{{ $expert->full_name }}">
+
+                        <div class="expert-name">
+                            {{ $expert->full_name }}
+                        </div>
+
+                        <div class="expert-skill">
+                            {{ $expert->skill ?? 'Chuyên viên làm đẹp' }}
+                        </div>
+
+                        <div class="expert-stars">
+                            ★★★★★
+                        </div>
+
+                        <div class="expert-link">
+                            Xem hồ sơ
+                        </div>
+                    </a>
+                </div>
+            @empty
+                <div class="col-12">
+                    <div class="alert alert-info text-center">
+                        Chưa có chuyên gia tiêu biểu.
+                    </div>
+                </div>
+            @endforelse
+        </div>
+    </div>
 </div>
 
 @endsection

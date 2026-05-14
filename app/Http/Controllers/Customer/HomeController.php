@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Customer;
 
 use App\Http\Controllers\Controller;
 use App\Models\Service;
+use App\Models\Staff;
 
 class HomeController extends Controller
 {
@@ -26,6 +27,8 @@ class HomeController extends Controller
             ->limit(3)
             ->get();
 
-        return view('customer.home', compact('topServices'));
+        $experts = Staff::limit(4)->get();
+
+        return view('customer.home', compact('topServices', 'experts'));
     }
 }

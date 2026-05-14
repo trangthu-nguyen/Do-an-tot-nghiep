@@ -310,8 +310,8 @@
                    title="Hồ sơ cá nhân">
 
                     <img class="profile-avatar"
-                         src="https://i.pravatar.cc/100?img=32"
-                         alt="avatar">
+     src="https://i.pravatar.cc/100?img={{ (session('staff_id') % 70) + 1 }}"
+     alt="avatar">
 
                     <div>
                         <div class="profile-name">

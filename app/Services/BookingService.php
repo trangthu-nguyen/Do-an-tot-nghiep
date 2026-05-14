@@ -40,11 +40,14 @@ class BookingService
             BookingDetail::create([
                 'booking_id' => $booking->booking_id,
                 'service_id' => $service->service_id,
-                'quantity' => 1,
                 'price' => $service->price,
             ]);
 
-            $this->createPayment($booking, $service->price, $data['payment_method'] ?? 'cod');
+            $this->createPayment(
+                $booking,
+                $service->price,
+                $data['payment_method'] ?? 'cod'
+            );
 
             $this->sendNewBookingNotifications($booking, $service, $customerId);
 
@@ -133,8 +136,7 @@ class BookingService
             'amount' => $amount,
             'payment_method' => $paymentMethod,
             'payment_status' => $isOnline ? 'paid' : 'pending',
-            'payment_date' => $isOnline ? now() : null,
-            'transaction_id' => $isOnline ? strtoupper($paymentMethod) . '-' . time() : null,
+            'payment_date' => now(),
         ]);
     }
 

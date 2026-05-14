@@ -186,6 +186,13 @@
         border-color:var(--primary);
     }
 
+    input[type="file"].form-control{
+        border:1px solid var(--border);
+        border-radius:16px;
+        padding:12px;
+        background:#fbf8f8;
+    }
+
     textarea.form-control{
         border:1px solid var(--border);
         border-radius:18px;
@@ -297,6 +304,9 @@
     $staffAddress = $staff->address ?? '';
     $staffSkill = $staff->skill ?? 'Chuyên viên làm đẹp';
     $staffBio = $staff->bio ?? 'Chuyên viên BeautyHome với kinh nghiệm chăm sóc sắc đẹp tận tâm. Luôn hướng tới trải nghiệm thư giãn, an toàn và phù hợp với từng khách hàng.';
+    $staffImage = $staff->image
+        ? asset('uploads/staff/'.$staff->image)
+        : asset('images/default-avatar.png');
 @endphp
 
 <div class="profile-title">Hồ sơ cá nhân</div>
@@ -306,14 +316,12 @@
 
 <div class="profile-layout">
 
-    {{-- LEFT --}}
     <div>
-
         <div class="profile-card">
             <div class="avatar-wrap">
                 <img class="avatar"
-                     src="https://i.pravatar.cc/200?img=47"
-                     alt="avatar">
+     src="https://i.pravatar.cc/200?img={{ (session('staff_id') % 70) + 1 }}"
+     alt="avatar">
 
                 <div class="avatar-edit">
                     <i class="bi bi-camera"></i>
@@ -344,20 +352,26 @@
                 <span class="special-tag">Tư vấn da</span>
             </div>
         </div>
-
     </div>
 
-    {{-- RIGHT --}}
     <div>
-
-        <form action="{{ route('staff.profile.update') }}" method="POST">
+        <form action="{{ route('staff.profile.update') }}"
+              method="POST"
+              enctype="multipart/form-data">
             @csrf
 
             <div class="info-card">
-
                 <div class="card-title">Thông tin cơ bản</div>
 
                 <div class="row g-4">
+
+                    <div class="col-md-12">
+                        <label class="form-label">Ảnh đại diện</label>
+                        <input type="file"
+                               name="image"
+                               class="form-control"
+                               accept="image/*">
+                    </div>
 
                     <div class="col-md-6">
                         <label class="form-label">Họ và tên</label>
@@ -417,9 +431,7 @@
                         Lưu hồ sơ
                     </button>
                 </div>
-
             </div>
-
         </form>
 
         <div class="cert-section">
@@ -429,7 +441,6 @@
             </div>
 
             <div class="cert-grid">
-
                 <div class="cert-card">
                     <div class="cert-icon">
                         <i class="bi bi-award"></i>
@@ -453,10 +464,8 @@
                     <div class="cert-name">Vệ sinh Dịch tễ & An toàn</div>
                     <div class="cert-time">Chứng nhận Bộ Y tế · Năm 2023</div>
                 </div>
-
             </div>
         </div>
-
     </div>
 
 </div>
