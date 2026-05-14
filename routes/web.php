@@ -30,7 +30,7 @@ use App\Http\Controllers\Staff\ProfileController as StaffProfileController;
 use App\Http\Controllers\Staff\NotificationController as StaffNotificationController;
 
 // ========== IMPORT MODELS ==========
-use App\Models\Service;
+use App\Http\Controllers\Customer\HomeController;
 
 
 // ================== TRANG CHỦ ==================
@@ -81,28 +81,7 @@ Route::prefix('customer')->name('customer.')->group(function () {
 
     // ================== PUBLIC: KHÔNG CẦN ĐĂNG NHẬP ==================
 
-    Route::get('/home', function () {
-
-        $topServices = Service::select('services.*')
-            ->leftJoin('booking_details', 'services.service_id', '=', 'booking_details.service_id')
-            ->selectRaw('COUNT(booking_details.service_id) as total_bookings')
-            ->groupBy(
-                'services.service_id',
-                'services.category_id',
-                'services.service_name',
-                'services.price',
-                'services.duration',
-                'services.description',
-                'services.image',
-                'services.status'
-            )
-            ->orderByDesc('total_bookings')
-            ->limit(3)
-            ->get();
-
-        return view('customer.home', compact('topServices'));
-
-    })->name('home');
+    Route::get('/home', [HomeController::class, 'index'])->name('home');
 
     Route::get('/services', [CustomerServiceController::class, 'index'])->name('services.index');
     Route::get('/services/{id}', [CustomerServiceController::class, 'show'])->name('services.show');
