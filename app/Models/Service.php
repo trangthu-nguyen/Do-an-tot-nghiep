@@ -19,6 +19,11 @@ class Service extends Model
         'status'
     ];
 
+    public function category()
+    {
+        return $this->belongsTo(Category::class, 'category_id', 'category_id');
+    }
+
     public function bookingDetails()
     {
         return $this->hasMany(BookingDetail::class, 'service_id', 'service_id');

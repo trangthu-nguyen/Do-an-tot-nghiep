@@ -9,10 +9,35 @@ use App\Models\Category;
 
 class ServiceController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $services = Service::orderBy('service_id', 'desc')->get();
-        return view('admin.services.index', compact('services'));
+        $query = Service::with('category')->orderBy('service_id', 'desc');
+
+        if ($request->filled('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $services = $query->get();
+        $categories = Category::all();
+
+        $totalServices = Service::count();
+        $activeServices = Service::where('status', 1)->count();
+
+        $mostBookedService = Service::withCount('bookingDetails')
+            ->orderByDesc('booking_details_count')
+            ->first();
+
+        return view('admin.services.index', compact(
+            'services',
+            'categories',
+            'totalServices',
+            'activeServices',
+            'mostBookedService'
+        ));
     }
 
     public function create()
@@ -29,8 +54,8 @@ class ServiceController extends Controller
             'price' => 'required|numeric',
             'duration' => 'required|numeric',
             'description' => 'nullable',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'status' => 'required'
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'status' => 'required',
         ]);
 
         $imageName = null;
@@ -71,8 +96,8 @@ class ServiceController extends Controller
             'price' => 'required|numeric',
             'duration' => 'required|numeric',
             'description' => 'nullable',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'status' => 'required'
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'status' => 'required',
         ]);
 
         $imageName = $service->image;
@@ -98,9 +123,11 @@ class ServiceController extends Controller
     public function destroy($id)
     {
         $service = Service::findOrFail($id);
-        
+
         if ($service->bookingDetails()->count() > 0) {
-            return redirect()->route('admin.services.index')->with('error', 'Không thể xóa dịch vụ này vì đã có khách hàng đặt (ảnh hưởng đến lịch sử giao dịch). Vui lòng Ẩn dịch vụ thay vì xóa.');
+            return redirect()
+                ->route('admin.services.index')
+                ->with('error', 'Không thể xóa dịch vụ này vì đã có khách hàng đặt. Vui lòng ẩn dịch vụ thay vì xóa.');
         }
 
         $service->delete();

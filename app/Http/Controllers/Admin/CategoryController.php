@@ -5,13 +5,29 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Category;
+use App\Models\Service;
 
 class CategoryController extends Controller
 {
     public function index()
     {
-        $categories = Category::orderBy('category_id', 'desc')->get();
-        return view('admin.categories.index', compact('categories'));
+        $categories = Category::withCount('services')
+            ->orderBy('category_id', 'desc')
+            ->get();
+
+        $totalCategories = Category::count();
+        $totalServices = Service::count();
+
+        $mostPopularCategory = Category::withCount('services')
+            ->orderByDesc('services_count')
+            ->first();
+
+        return view('admin.categories.index', compact(
+            'categories',
+            'totalCategories',
+            'totalServices',
+            'mostPopularCategory'
+        ));
     }
 
     public function create()
@@ -28,15 +44,18 @@ class CategoryController extends Controller
 
         Category::create([
             'category_name' => $request->category_name,
-            'description' => $request->description
+            'description' => $request->description,
         ]);
 
-        return redirect()->route('admin.categories.index')->with('success', 'Thêm danh mục thành công!');
+        return redirect()
+            ->route('admin.categories.index')
+            ->with('success', 'Thêm danh mục thành công!');
     }
 
     public function edit($id)
     {
         $category = Category::findOrFail($id);
+
         return view('admin.categories.edit', compact('category'));
     }
 
@@ -51,10 +70,12 @@ class CategoryController extends Controller
 
         $category->update([
             'category_name' => $request->category_name,
-            'description' => $request->description
+            'description' => $request->description,
         ]);
 
-        return redirect()->route('admin.categories.index')->with('success', 'Cập nhật danh mục thành công!');
+        return redirect()
+            ->route('admin.categories.index')
+            ->with('success', 'Cập nhật danh mục thành công!');
     }
 
     public function destroy($id)
@@ -62,11 +83,15 @@ class CategoryController extends Controller
         $category = Category::findOrFail($id);
 
         if ($category->services()->count() > 0) {
-            return redirect()->route('admin.categories.index')->with('error', 'Không thể xóa danh mục này vì vẫn còn dịch vụ bên trong.');
+            return redirect()
+                ->route('admin.categories.index')
+                ->with('error', 'Không thể xóa danh mục này vì vẫn còn dịch vụ bên trong.');
         }
 
         $category->delete();
 
-        return redirect()->route('admin.categories.index')->with('success', 'Xóa danh mục thành công!');
+        return redirect()
+            ->route('admin.categories.index')
+            ->with('success', 'Xóa danh mục thành công!');
     }
 }
