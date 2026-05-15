@@ -443,13 +443,22 @@
         showStep();
     }
 
-    function submitBooking() {
+    function submitBooking()
+{
+    // THANH TOÁN ONLINE
+    if (
+        paymentMethod === 'momo' ||
+        paymentMethod === 'vnpay' ||
+        paymentMethod === 'bank'
+    ) {
         const form = document.createElement('form');
+
         form.method = 'POST';
-        form.action = "{{ route('customer.bookings.store') }}";
+        form.action = "{{ route('payment.init') }}";
 
         form.innerHTML = `
             @csrf
+
             <input type="hidden" name="service_id" value="{{ $service->service_id }}">
             <input type="hidden" name="booking_date" value="${selectedDate}">
             <input type="hidden" name="booking_time" value="${selectedTime}">
@@ -461,7 +470,31 @@
 
         document.body.appendChild(form);
         form.submit();
+
+        return;
     }
+
+    // THANH TOÁN KHI HOÀN THÀNH
+    const form = document.createElement('form');
+
+    form.method = 'POST';
+    form.action = "{{ route('customer.bookings.store') }}";
+
+    form.innerHTML = `
+        @csrf
+
+        <input type="hidden" name="service_id" value="{{ $service->service_id }}">
+        <input type="hidden" name="booking_date" value="${selectedDate}">
+        <input type="hidden" name="booking_time" value="${selectedTime}">
+        <input type="hidden" name="address" value="${custAddress}">
+        <input type="hidden" name="customer_name" value="${custName}">
+        <input type="hidden" name="customer_phone" value="${custPhone}">
+        <input type="hidden" name="payment_method" value="cod">
+    `;
+
+    document.body.appendChild(form);
+    form.submit();
+}
 
     function generateDatePicker() {
         const container = document.getElementById('datePicker');

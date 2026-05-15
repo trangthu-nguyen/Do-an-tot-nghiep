@@ -118,7 +118,7 @@
 <div class="profile-wrapper">
 
     <div class="profile-top">
-        <img src="{{ asset('uploads/avatar/default-avatar.png') }}" class="avatar">
+        <img src="{{ $customer->avatar_url }}" class="avatar">
 
         <div class="profile-name">
             {{ $customer->full_name }}

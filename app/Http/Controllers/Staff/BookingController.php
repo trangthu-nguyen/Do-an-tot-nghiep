@@ -49,16 +49,22 @@ class BookingController extends Controller
 }
 
     public function show($id)
-    {
-        $booking = Booking::with(['customer', 'bookingDetails.service'])->findOrFail($id);
+{
+    $booking = Booking::with([
+        'customer',
+        'bookingDetails.service',
+        'payment',
+        'staff'
+    ])->findOrFail($id);
 
-        // staff chỉ xem booking của mình
-        if ($booking->staff_id != session('staff_id')) {
-            return redirect()->route('staff.bookings.index')->with('error', 'Bạn không có quyền xem booking này!');
-        }
-
-        return view('staff.bookings.show', compact('booking'));
+    if ($booking->staff_id != session('staff_id')) {
+        return redirect()
+            ->route('staff.bookings.index')
+            ->with('error', 'Bạn không có quyền xem booking này!');
     }
+
+    return view('staff.bookings.show', compact('booking'));
+}
 
     public function updateStatus(Request $request, $id)
     {

@@ -14,73 +14,87 @@
     }
 
     .profile-edit-wrapper{
-        max-width: 520px;
-        margin: 0 auto;
-        background: white;
-        border-radius: 28px;
-        border: 1px solid var(--outline);
-        box-shadow: 0 15px 45px rgba(123,85,84,0.12);
-        padding: 30px;
+        max-width:520px;
+        margin:0 auto;
+        background:white;
+        border-radius:28px;
+        border:1px solid var(--outline);
+        box-shadow:0 15px 45px rgba(123,85,84,0.12);
+        padding:30px;
     }
 
     .top-title{
         text-align:center;
-        font-family:'Noto Serif', serif;
-        font-weight: 800;
-        font-size: 26px;
-        margin-bottom: 18px;
-        color: var(--text);
+        font-family:'Noto Serif',serif;
+        font-weight:800;
+        font-size:26px;
+        margin-bottom:18px;
+        color:var(--text);
     }
 
     .back-btn{
-        width: 44px;
-        height: 44px;
-        border-radius: 50%;
-        background: white;
-        border: 1px solid var(--outline);
+        width:44px;
+        height:44px;
+        border-radius:50%;
+        background:white;
+        border:1px solid var(--outline);
         display:flex;
         align-items:center;
         justify-content:center;
         text-decoration:none;
-        color: var(--primary);
-        box-shadow: 0 10px 25px rgba(123,85,84,0.12);
-        margin-bottom: 16px;
+        color:var(--primary);
+        box-shadow:0 10px 25px rgba(123,85,84,0.12);
+        margin-bottom:16px;
+    }
+
+    .avatar-preview{
+        text-align:center;
+        margin-bottom:22px;
+    }
+
+    .avatar-preview img{
+        width:118px;
+        height:118px;
+        border-radius:50%;
+        object-fit:cover;
+        border:5px solid #f1dddd;
+        box-shadow:0 12px 30px rgba(123,85,84,0.15);
     }
 
     label{
-        font-size: 12px;
-        font-weight: 900;
-        text-transform: uppercase;
-        color: var(--muted);
-        margin-bottom: 6px;
+        font-size:12px;
+        font-weight:900;
+        text-transform:uppercase;
+        color:var(--muted);
+        margin-bottom:6px;
     }
 
-    .form-control, .form-select{
-        border-radius: 16px;
-        border: 1px solid var(--outline);
-        padding: 12px 14px;
-        font-weight: 700;
+    .form-control,.form-select{
+        border-radius:16px;
+        border:1px solid var(--outline);
+        padding:12px 14px;
+        font-weight:700;
     }
 
-    .form-control:focus, .form-select:focus{
-        border-color: var(--primary);
-        box-shadow: 0 0 0 4px rgba(123,85,84,0.15);
+    .form-control:focus,.form-select:focus{
+        border-color:var(--primary);
+        box-shadow:0 0 0 4px rgba(123,85,84,0.15);
     }
 
     .btn-save{
-        background: var(--primary);
-        border: none;
-        color: white;
-        border-radius: 18px;
-        padding: 14px;
-        font-weight: 900;
-        width: 100%;
-        margin-top: 20px;
+        background:var(--primary);
+        border:none;
+        color:white;
+        border-radius:18px;
+        padding:14px;
+        font-weight:900;
+        width:100%;
+        margin-top:20px;
         transition:0.2s;
     }
 
     .btn-save:hover{
-        background: var(--primary-dark);
+        background:var(--primary-dark);
     }
 </style>
 
@@ -92,8 +106,27 @@
 
     <div class="top-title">Chỉnh sửa hồ sơ</div>
 
-    <form action="{{ route('customer.profile.update') }}" method="POST">
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach ($errors->all() as $err)
+                    <li>{{ $err }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
+
+    <form action="{{ route('customer.profile.update') }}" method="POST" enctype="multipart/form-data">
         @csrf
+
+        <div class="avatar-preview">
+            <img src="{{ $customer->avatar_url }}" alt="Avatar khách hàng">
+        </div>
+
+        <div class="mb-3">
+            <label>Ảnh đại diện</label>
+            <input type="file" name="avatar" class="form-control" accept="image/*">
+        </div>
 
         <div class="mb-3">
             <label>Họ và tên</label>
@@ -124,9 +157,9 @@
                 <label>Giới tính</label>
                 <select name="gender" class="form-select">
                     <option value="">-- Chọn --</option>
-                    <option value="Nam" {{ $customer->gender == 'Nam' ? 'selected' : '' }}>Nam</option>
-                    <option value="Nữ" {{ $customer->gender == 'Nữ' ? 'selected' : '' }}>Nữ</option>
-                    <option value="Khác" {{ $customer->gender == 'Khác' ? 'selected' : '' }}>Khác</option>
+                    <option value="Nam" {{ old('gender', $customer->gender) == 'Nam' ? 'selected' : '' }}>Nam</option>
+                    <option value="Nữ" {{ old('gender', $customer->gender) == 'Nữ' ? 'selected' : '' }}>Nữ</option>
+                    <option value="Khác" {{ old('gender', $customer->gender) == 'Khác' ? 'selected' : '' }}>Khác</option>
                 </select>
             </div>
         </div>
@@ -134,7 +167,6 @@
         <button class="btn-save">
             Lưu thay đổi <i class="bi bi-check2-circle"></i>
         </button>
-
     </form>
 
 </div>

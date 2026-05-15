@@ -25,22 +25,33 @@ class ProfileController extends Controller
         $customer = Customer::findOrFail(session('customer_id'));
 
         $request->validate([
-            'full_name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
-            'email' => 'required|email|max:255',
+            'full_name'  => 'required|string|max:255',
+            'phone'      => 'required|string|max:20',
+            'email'      => 'required|email|max:255',
             'birth_date' => 'nullable|date',
-            'gender' => 'nullable|in:Nam,Nữ,Khác'
+            'gender'     => 'nullable|in:Nam,Nữ,Khác',
+            'avatar'     => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
-        $customer->full_name = $request->full_name;
-        $customer->phone = $request->phone;
-        $customer->email = $request->email;
-        $customer->birth_date = $request->birth_date;
-        $customer->gender = $request->gender;
+        $data = $request->only([
+            'full_name',
+            'phone',
+            'email',
+            'birth_date',
+            'gender',
+        ]);
 
-        $customer->save();
+        if ($request->hasFile('avatar')) {
+            $avatarName = time() . '_' . $request->file('avatar')->getClientOriginalName();
+            $request->file('avatar')->move(public_path('uploads/customers'), $avatarName);
+            $data['avatar'] = $avatarName;
+        }
 
-        return redirect()->route('customer.profile.index')->with('success', 'Cập nhật thông tin thành công!');
+        $customer->update($data);
+
+        return redirect()
+            ->route('customer.profile.index')
+            ->with('success', 'Cập nhật thông tin thành công!');
     }
 
     public function address()
@@ -57,9 +68,12 @@ class ProfileController extends Controller
             'address' => 'required|string|max:500'
         ]);
 
-        $customer->address = $request->address;
-        $customer->save();
+        $customer->update([
+            'address' => $request->address
+        ]);
 
-        return redirect()->route('customer.profile.index')->with('success', 'Lưu địa chỉ thành công!');
+        return redirect()
+            ->route('customer.profile.index')
+            ->with('success', 'Lưu địa chỉ thành công!');
     }
 }

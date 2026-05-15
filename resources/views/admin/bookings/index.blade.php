@@ -192,12 +192,23 @@
 
             @forelse($staffs as $staff)
                 @php
-                    $avatarId = ($staff->staff_id % 70) + 1;
-                @endphp
+    $staffPortraits = [
+        'https://randomuser.me/api/portraits/women/44.jpg',
+        'https://randomuser.me/api/portraits/women/65.jpg',
+        'https://randomuser.me/api/portraits/women/68.jpg',
+        'https://randomuser.me/api/portraits/women/71.jpg',
+        'https://randomuser.me/api/portraits/women/72.jpg',
+        'https://randomuser.me/api/portraits/women/76.jpg',
+        'https://randomuser.me/api/portraits/women/79.jpg',
+        'https://randomuser.me/api/portraits/women/81.jpg',
+    ];
+
+    $staffAvatar = $staffPortraits[$staff->staff_id % count($staffPortraits)];
+@endphp
 
                 <div class="staff-row">
                     <div class="d-flex align-items-center">
-                        <img src="https://i.pravatar.cc/80?img={{ $avatarId }}" class="avatar">
+                        <img src="{{ $staffAvatar }}" class="avatar">
                         <div>
                             <div class="fw-bold">{{ $staff->full_name }}</div>
                             <div class="small-muted">{{ $staff->skill ?? 'Nhân viên' }}</div>

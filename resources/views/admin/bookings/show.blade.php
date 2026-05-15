@@ -31,9 +31,20 @@
         default => $paymentMethod,
     };
 
-    $staffAvatar = $booking->staff
-        ? (($booking->staff->staff_id % 70) + 1)
-        : 12;
+    $staffPortraits = [
+    'https://randomuser.me/api/portraits/women/44.jpg',
+    'https://randomuser.me/api/portraits/women/65.jpg',
+    'https://randomuser.me/api/portraits/women/68.jpg',
+    'https://randomuser.me/api/portraits/women/71.jpg',
+    'https://randomuser.me/api/portraits/women/72.jpg',
+    'https://randomuser.me/api/portraits/women/76.jpg',
+    'https://randomuser.me/api/portraits/women/79.jpg',
+    'https://randomuser.me/api/portraits/women/81.jpg',
+];
+
+$staffAvatar = $booking->staff
+    ? $staffPortraits[$booking->staff->staff_id % count($staffPortraits)]
+    : asset('uploads/avatar/default-avatar.png');
 @endphp
 
 <style>
@@ -112,7 +123,7 @@
                     <div class="card-title">Thông tin khách hàng</div>
 
                     <div class="customer-box">
-                        <img src="{{ asset('uploads/avatar/default-avatar.png') }}"
+                        <img src="{{ $booking->customer->avatar_url ?? asset('uploads/avatar/default-avatar.png') }}"
                             class="avatar">
 
                         <div>
@@ -188,8 +199,7 @@
                 @if($booking->staff)
                     <div class="d-flex justify-content-between align-items-center gap-3">
                         <div class="staff-line">
-                            <img src="https://i.pravatar.cc/100?img={{ $staffAvatar }}" class="avatar">
-
+                            <img src="{{ $staffAvatar }}" class="avatar">
                             <div>
                                 <div class="name">{{ $booking->staff->full_name }}</div>
                                 <div class="muted">{{ $booking->staff->skill ?? 'Nhân viên làm đẹp' }}</div>

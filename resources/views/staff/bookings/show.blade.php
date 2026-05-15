@@ -509,8 +509,8 @@
         <div class="ui-card">
             <div class="customer-box">
                 <img class="avatar"
-                     src="https://i.pravatar.cc/120?img={{ ($booking->booking_id % 60) + 1 }}"
-                     alt="avatar">
+     src="{{ $booking->customer->avatar_url ?? asset('uploads/avatar/default-avatar.png') }}"
+     alt="avatar khách hàng">
 
                 <div style="flex:1;">
                     <div class="customer-name">

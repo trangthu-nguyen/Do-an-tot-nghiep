@@ -22,6 +22,9 @@ class AuthController extends Controller
             'email'     => 'required|email|unique:customers,email',
             'phone'     => 'required|string|max:20',
             'password'  => 'required|min:6|confirmed',
+        ], [
+            'password.min'       => 'Mật khẩu phải có ít nhất 6 ký tự.',
+            'password.confirmed' => 'Xác nhận mật khẩu không khớp.',
         ]);
 
         Customer::create([
@@ -31,7 +34,9 @@ class AuthController extends Controller
             'password'  => Hash::make($request->password),
         ]);
 
-        return redirect()->route('customer.login')->with('success', 'Đăng ký thành công! Vui lòng đăng nhập.');
+        return redirect()
+            ->route('customer.login')
+            ->with('success', 'Đăng ký thành công! Vui lòng đăng nhập.');
     }
 
     // ================= LOGIN =================
@@ -53,21 +58,26 @@ class AuthController extends Controller
             return back()->with('error', 'Email hoặc mật khẩu không đúng!');
         }
 
-        // ✅ Lưu session
         session()->put('customer_id', $customer->customer_id);
         session()->put('customer_name', $customer->full_name);
         session()->put('customer_phone', $customer->phone);
 
-        return redirect()->route('customer.home')->with('success', 'Đăng nhập thành công!');
+        return redirect()
+            ->route('customer.home')
+            ->with('success', 'Đăng nhập thành công!');
     }
 
     // ================= LOGOUT =================
     public function logout()
     {
-        session()->forget('customer_id');
-        session()->forget('customer_name');
-        session()->forget('customer_phone');
+        session()->forget([
+            'customer_id',
+            'customer_name',
+            'customer_phone'
+        ]);
 
-        return redirect()->route('customer.login')->with('success', 'Đã đăng xuất!');
+        return redirect()
+            ->route('customer.login')
+            ->with('success', 'Đã đăng xuất!');
     }
 }
