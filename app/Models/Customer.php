@@ -18,4 +18,9 @@ class Customer extends Model
         'address',
         'created_at'
     ];
+
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class, 'customer_id', 'customer_id');
+    }
 }

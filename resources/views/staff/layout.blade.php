@@ -5,13 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title','Staff Panel')</title>
 
-    <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
-    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Noto+Serif:wght@600;700&display=swap" rel="stylesheet">
 
     <style>
@@ -196,6 +191,25 @@
             background:var(--primary-dark);
         }
 
+        .notification-badge{
+            position:absolute;
+            top:-6px;
+            right:-6px;
+            min-width:20px;
+            height:20px;
+            padding:0 6px;
+            border-radius:999px;
+            background:#ff3b30;
+            color:white;
+            font-size:11px;
+            font-weight:800;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            border:2px solid white;
+            box-shadow:0 6px 16px rgba(0,0,0,0.15);
+        }
+
         @media(max-width:991px){
             .sidebar{
                 display:none;
@@ -205,44 +219,39 @@
                 padding:25px 15px;
             }
         }
-        .notification-badge{
-    position:absolute;
-    top:-6px;
-    right:-6px;
-    min-width:20px;
-    height:20px;
-    padding:0 6px;
-    border-radius:999px;
-    background:#ff3b30;
-    color:white;
-    font-size:11px;
-    font-weight:800;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    border:2px solid white;
-    box-shadow:0 6px 16px rgba(0,0,0,0.15);
-}
     </style>
-
 </head>
+
 @php
     $staffUnreadCount = \App\Models\Notification::where('user_type', 'staff')
         ->where('user_id', session('staff_id'))
         ->where('is_read', 0)
         ->count();
+
+    $femalePortraits = [
+        'https://randomuser.me/api/portraits/women/44.jpg',
+        'https://randomuser.me/api/portraits/women/65.jpg',
+        'https://randomuser.me/api/portraits/women/68.jpg',
+        'https://randomuser.me/api/portraits/women/71.jpg',
+        'https://randomuser.me/api/portraits/women/72.jpg',
+        'https://randomuser.me/api/portraits/women/76.jpg',
+        'https://randomuser.me/api/portraits/women/79.jpg',
+        'https://randomuser.me/api/portraits/women/81.jpg'
+    ];
+
+    $staffAvatar = $femalePortraits[
+        (session('staff_id') ?? 1) % count($femalePortraits)
+    ];
 @endphp
+
 <body>
 
 <div class="staff-wrapper">
 
-    <!-- SIDEBAR -->
     <aside class="sidebar">
-
         <div class="brand">BeautyHome</div>
 
         <div class="sidebar-menu">
-
             <a href="{{ route('staff.bookings.index') }}"
                class="sidebar-link {{ request()->routeIs('staff.bookings.*') ? 'active' : '' }}">
                 <i class="bi bi-calendar-check"></i>
@@ -266,52 +275,43 @@
                 <i class="bi bi-calendar-plus"></i>
                 <span>Đăng ký lịch làm</span>
             </a>
-
         </div>
 
-        <!-- LOGOUT -->
         <form action="{{ route('staff.logout') }}" method="POST">
             @csrf
             <button type="submit" class="logout-btn">
                 <i class="bi bi-box-arrow-right"></i> Đăng xuất
             </button>
         </form>
-
     </aside>
 
-    <!-- MAIN -->
     <main class="main-content">
 
-        <!-- TOPBAR -->
         <div class="topbar">
-
             <div class="topbar-title">
                 @yield('page-title','Staff Dashboard')
             </div>
 
             <div class="topbar-right">
-
                 <a href="{{ route('staff.notifications.index') }}"
-   class="icon-btn"
-   title="Thông báo">
+                   class="icon-btn"
+                   title="Thông báo">
+                    <i class="bi bi-bell"></i>
 
-    <i class="bi bi-bell"></i>
-
-    @if($staffUnreadCount > 0)
-        <span class="notification-badge">
-            {{ $staffUnreadCount > 9 ? '9+' : $staffUnreadCount }}
-        </span>
-    @endif
-
-</a>
+                    @if($staffUnreadCount > 0)
+                        <span class="notification-badge">
+                            {{ $staffUnreadCount > 9 ? '9+' : $staffUnreadCount }}
+                        </span>
+                    @endif
+                </a>
 
                 <a href="{{ route('staff.profile.index') }}"
                    class="profile-box"
                    title="Hồ sơ cá nhân">
 
                     <img class="profile-avatar"
-     src="https://i.pravatar.cc/100?img={{ (session('staff_id') % 70) + 1 }}"
-     alt="avatar">
+                         src="{{ $staffAvatar }}"
+                         alt="avatar">
 
                     <div>
                         <div class="profile-name">
@@ -321,14 +321,10 @@
                             Staff
                         </div>
                     </div>
-
                 </a>
-
             </div>
-
         </div>
 
-        <!-- ALERT -->
         @if(session('success'))
             <div class="alert alert-success text-center">
                 {{ session('success') }}
@@ -341,7 +337,6 @@
             </div>
         @endif
 
-        <!-- CONTENT -->
         @yield('content')
 
     </main>

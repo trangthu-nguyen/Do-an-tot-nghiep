@@ -1,124 +1,422 @@
 @extends('admin.layout')
 
-@section('title', 'Chi tiết Lịch đặt')
+@section('title', 'Chi tiết lịch hẹn')
 
 @section('content')
-<h2 class="fw-bold mb-3">Chi tiết Lịch đặt #{{ $booking->booking_id }}</h2>
 
-<div class="card shadow-sm p-3 mb-4">
-    <p><b>Khách hàng:</b> {{ $booking->customer->full_name ?? 'N/A' }} (ID: {{ $booking->customer_id }})</p>
+@php
+    $statusText = [
+        0 => 'Chờ xác nhận',
+        1 => 'Đã xác nhận',
+        2 => 'Đang thực hiện',
+        3 => 'Hoàn thành',
+        4 => 'Đã hủy',
+    ][$booking->status] ?? 'Không rõ';
 
-    <p><b>Số điện thoại:</b> {{ $booking->customer->phone ?? 'N/A' }}</p>
+    $statusClass = [
+        0 => 'warning',
+        1 => 'success',
+        2 => 'primary',
+        3 => 'success',
+        4 => 'danger',
+    ][$booking->status] ?? 'secondary';
 
-    <p><b>Địa chỉ:</b> {{ $booking->address ?? 'N/A' }}</p>
+    $paymentMethod = $booking->payment->payment_method ?? 'cod';
 
-    <p><b>Dịch vụ:</b>
-        <ul>
-            @foreach($booking->bookingDetails as $detail)
-                <li>{{ $detail->service->service_name ?? 'N/A' }} ({{ number_format($detail->price) }} VNĐ)</li>
-            @endforeach
-        </ul>
-    </p>
+    $paymentText = match($paymentMethod) {
+        'cod' => 'Thanh toán khi hoàn thành',
+        'momo' => 'Ví MoMo',
+        'vnpay' => 'VNPAY',
+        'bank' => 'Chuyển khoản ngân hàng',
+        default => $paymentMethod,
+    };
 
-    <p><b>Tổng tiền:</b> <span class="text-danger fw-bold">{{ number_format($booking->total_amount) }} VNĐ</span></p>
+    $staffAvatar = $booking->staff
+        ? (($booking->staff->staff_id % 70) + 1)
+        : 12;
+@endphp
 
-    <hr>
+<style>
+    .booking-page{color:#2f2323}
+    .page-head{display:flex;justify-content:space-between;gap:18px;align-items:center;margin-bottom:24px}
+    .mini{font-size:12px;font-weight:900;color:#9b8f8f}
+    .title{font-size:32px;font-weight:900;margin:6px 0;color:#2f2323}
+    .actions{display:flex;gap:10px;flex-wrap:wrap}
+    .btn-soft,.btn-main{border:0;border-radius:999px;padding:10px 16px;font-weight:900;text-decoration:none}
+    .btn-soft{background:white;color:#7b5554;border:1px solid #eadede}
+    .btn-main{background:#7b5554;color:white}
+    .btn-main:hover{background:#684847;color:white}
+    .grid{display:grid;grid-template-columns:1fr 330px;gap:22px}
+    .left-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .cardx{background:white;border:1px solid #f0e4e4;border-radius:24px;box-shadow:0 12px 32px rgba(123,85,84,.06);padding:22px}
+    .card-title{font-size:13px;text-transform:uppercase;color:#9b8f8f;font-weight:900;margin-bottom:16px}
+    .customer-box{display:flex;gap:14px}
+    .avatar{width:58px;height:58px;border-radius:50%;object-fit:cover;border:4px solid #ffe1e0}
+    .name{font-size:18px;font-weight:900;color:#2f2323}
+    .muted{color:#7d7272;font-size:13px}
+    .note{background:#f7f2f2;border-radius:16px;padding:14px;margin-top:14px;font-size:13px;color:#5f5656;line-height:1.7}
+    .service-row{border-bottom:1px solid #f3eeee;padding-bottom:12px;margin-bottom:12px}
+    .service-row:last-child{border-bottom:0;margin-bottom:0;padding-bottom:0}
+    .price{font-weight:900;color:#ba1a1a}
+    .staff-card{margin-top:18px}
+    .staff-line{display:flex;gap:14px;align-items:center}
+    .rating{background:#fff1f1;color:#7b5554;border-radius:16px;padding:12px;text-align:center;font-weight:900}
+    .activity{margin-top:18px}
+    .activity-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #f3eeee}
+    .activity-dot{width:32px;height:32px;border-radius:50%;background:#ffe1e0;color:#7b5554;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .payment-card{background:#2f2929;color:white;border-radius:24px;padding:24px;box-shadow:0 18px 40px rgba(0,0,0,.18)}
+    .payment-title{font-size:15px;text-transform:uppercase;color:#d8cccc;font-weight:900;margin-bottom:18px}
+    .pay-row{display:flex;justify-content:space-between;margin-bottom:12px;color:#e9dddd;font-size:14px}
+    .pay-total{display:flex;justify-content:space-between;border-top:1px solid rgba(255,255,255,.15);padding-top:16px;margin-top:16px;font-size:18px;font-weight:900}
+    .pay-status{background:#dcfce7;color:#15803d;border-radius:999px;padding:6px 12px;font-size:12px;font-weight:900}
+    .pay-status.pending{background:#fef3c7;color:#b45309}
+    .side-card{margin-top:18px}
+    .form-select{border-radius:14px;border:1px solid #eadede;padding:11px}
+    .quick-btn{display:block;width:100%;background:white;border:1px solid #eadede;border-radius:14px;padding:12px;text-align:left;margin-bottom:10px;color:#5f5656;font-weight:800;text-decoration:none}
+    .status-badge{border-radius:999px;padding:8px 14px;font-weight:900}
+    @media(max-width:991px){.grid,.left-grid{grid-template-columns:1fr}.page-head{flex-direction:column;align-items:flex-start}}
+</style>
 
-    <h5 class="fw-bold">Thông tin thanh toán</h5>
+<div class="booking-page">
 
-    @if($booking->payment)
-        <p><b>Phương thức:</b>
-            @if($booking->payment->payment_method == 'online')
-                Thanh toán trực tuyến
-            @elseif($booking->payment->payment_method == 'cod')
-                Thanh toán khi hoàn thành
-            @else
-                {{ $booking->payment->payment_method }}
-            @endif
-        </p>
+    <div class="page-head">
+        <div>
+            <div class="mini">
+                ĐẶT CHỖ #BH-{{ $booking->booking_id }}
+                <span class="badge bg-{{ $statusClass }} ms-2">{{ $statusText }}</span>
+            </div>
 
-        <p><b>Số tiền thanh toán:</b> {{ number_format($booking->payment->amount) }} VNĐ</p>
-
-        <p><b>Trạng thái thanh toán:</b>
-            @if($booking->payment->payment_status == 'paid')
-                <span class="badge bg-success">Đã thanh toán</span>
-            @else
-                <span class="badge bg-warning text-dark">Chờ thanh toán</span>
-            @endif
-        </p>
-    @else
-        <p class="text-muted">(Chưa có dữ liệu thanh toán)</p>
-    @endif
-
-    <hr>
-
-    <p><b>Ngày đặt:</b> {{ $booking->booking_date }}</p>
-    <p><b>Giờ đặt:</b> {{ $booking->booking_time }}</p>
-    <p><b>Staff ID:</b> {{ $booking->staff_id ?? 'Chưa phân công' }}</p>
-
-    <p><b>Trạng thái hiện tại:</b>
-        @if($booking->status == 0)
-            <span class="badge bg-warning">Chờ xác nhận</span>
-        @elseif($booking->status == 1)
-            <span class="badge" style="background:#ebbab9; color:#603d3d;">Đã xác nhận</span>
-        @elseif($booking->status == 2)
-            <span class="badge bg-primary">Đang thực hiện</span>
-        @elseif($booking->status == 3)
-            <span class="badge bg-success">Hoàn thành</span>
-        @elseif($booking->status == 4)
-            <span class="badge bg-danger">Đã hủy</span>
-        @else
-            <span class="badge bg-secondary">Không rõ</span>
-        @endif
-    </p>
-</div>
-
-{{-- Form phân staff --}}
-<div class="card shadow-sm p-3 mb-4">
-    <h5 class="fw-bold">Phân công nhân viên</h5>
-
-    <form action="{{ route('admin.bookings.assignStaff', $booking->booking_id) }}" method="POST">
-        @csrf
-
-        <div class="mb-3">
-            <label class="form-label">Chọn Staff</label>
-            <select name="staff_id" class="form-select">
-                <option value="">-- Chọn nhân viên --</option>
-
-                @foreach($staffs as $staff)
-                    <option value="{{ $staff->staff_id }}"
-                        {{ $booking->staff_id == $staff->staff_id ? 'selected' : '' }}>
-                        {{ $staff->full_name }} (ID: {{ $staff->staff_id }})
-                    </option>
-                @endforeach
-            </select>
+            <h1 class="title">Chi tiết lịch hẹn</h1>
         </div>
 
-        <button class="btn btn-primary">Phân công</button>
-    </form>
-</div>
+        <div class="actions">
+            <a href="{{ route('admin.bookings.index') }}" class="btn-soft">
+                ← Quay lại
+            </a>
 
-{{-- Form cập nhật status --}}
-<div class="card shadow-sm p-3 mb-4">
-    <h5 class="fw-bold">Cập nhật trạng thái</h5>
+            <button type="button" class="btn-soft" data-bs-toggle="modal" data-bs-target="#statusModal">
+                Xử lý
+            </button>
 
-    <form action="{{ route('admin.bookings.updateStatus', $booking->booking_id) }}" method="POST">
-        @csrf
+            <button type="button" class="btn-main" data-bs-toggle="modal" data-bs-target="#staffModal">
+                Phân công
+            </button>
+        </div>
+    </div>
 
-        <div class="mb-3">
-            <label class="form-label">Trạng thái</label>
-            <select name="status" class="form-select">
-                <option value="0" {{ $booking->status == 0 ? 'selected' : '' }}>Chờ xác nhận</option>
-                <option value="1" {{ $booking->status == 1 ? 'selected' : '' }}>Đã xác nhận</option>
-                <option value="2" {{ $booking->status == 2 ? 'selected' : '' }}>Đang thực hiện</option>
-                <option value="3" {{ $booking->status == 3 ? 'selected' : '' }}>Hoàn thành</option>
-                <option value="4" {{ $booking->status == 4 ? 'selected' : '' }}>Đã hủy</option>
-            </select>
+    <div class="grid">
+
+        <div>
+            <div class="left-grid">
+                <div class="cardx">
+                    <div class="card-title">Thông tin khách hàng</div>
+
+                    <div class="customer-box">
+                        <img src="{{ asset('uploads/avatar/default-avatar.png') }}"
+                            class="avatar">
+
+                        <div>
+                            <div class="name">{{ $booking->customer->full_name ?? 'Khách hàng' }}</div>
+                            <div class="muted">
+                                <i class="bi bi-telephone"></i>
+                                {{ $booking->customer->phone ?? 'Chưa có SĐT' }}
+                            </div>
+                            <div class="muted">
+                                <i class="bi bi-envelope"></i>
+                                {{ $booking->customer->email ?? 'Chưa có email' }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="note">
+                        <strong>Địa chỉ:</strong><br>
+                        {{ $booking->address ?? 'Chưa cập nhật địa chỉ' }}
+                    </div>
+
+                    @if($booking->note)
+                        <div class="note">
+                            <strong>Ghi chú:</strong><br>
+                            {{ $booking->note }}
+                        </div>
+                    @endif
+                </div>
+
+                <div class="cardx">
+                    <div class="card-title">Chi tiết dịch vụ</div>
+
+                    @foreach($booking->bookingDetails as $detail)
+                        <div class="service-row">
+                            <div class="d-flex justify-content-between gap-3">
+                                <div>
+                                    <div class="name" style="font-size:17px;">
+                                        {{ $detail->service->service_name ?? 'N/A' }}
+                                    </div>
+
+                                    <div class="muted">
+                                        {{ $detail->service->description ?? 'Không có mô tả' }}
+                                    </div>
+                                </div>
+
+                                <div class="price">
+                                    {{ number_format($detail->price) }}đ
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+
+                    <div class="row mt-3 g-2">
+                        <div class="col-6">
+                            <div class="note mb-0">
+                                <strong>Ngày:</strong><br>
+                                {{ \Carbon\Carbon::parse($booking->booking_date)->format('d/m/Y') }}
+                            </div>
+                        </div>
+
+                        <div class="col-6">
+                            <div class="note mb-0">
+                                <strong>Giờ:</strong><br>
+                                {{ $booking->booking_time }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cardx staff-card">
+                <div class="card-title">Nhân viên phụ trách</div>
+
+                @if($booking->staff)
+                    <div class="d-flex justify-content-between align-items-center gap-3">
+                        <div class="staff-line">
+                            <img src="https://i.pravatar.cc/100?img={{ $staffAvatar }}" class="avatar">
+
+                            <div>
+                                <div class="name">{{ $booking->staff->full_name }}</div>
+                                <div class="muted">{{ $booking->staff->skill ?? 'Nhân viên làm đẹp' }}</div>
+                                <div class="muted">
+                                    <i class="bi bi-telephone"></i>
+                                    {{ $booking->staff->phone ?? 'Chưa có SĐT' }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="rating">
+                            4.9 ★
+                            <div class="muted">Đánh giá</div>
+                        </div>
+                    </div>
+                @else
+                    <div class="text-muted">
+                        Lịch này chưa được phân công nhân viên.
+                    </div>
+
+                    <button type="button" class="btn-main mt-3" data-bs-toggle="modal" data-bs-target="#staffModal">
+                        Phân công ngay
+                    </button>
+                @endif
+            </div>
+
+            <div class="cardx activity">
+                <div class="card-title">Lịch sử hoạt động</div>
+
+                <div class="activity-item">
+                    <div class="activity-dot">
+                        <i class="bi bi-plus"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold">Lịch hẹn được tạo</div>
+                        <div class="muted">
+                            {{ \Carbon\Carbon::parse($booking->booking_date)->format('d/m/Y') }}
+                            · {{ $booking->booking_time }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="activity-item">
+                    <div class="activity-dot">
+                        <i class="bi bi-credit-card"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold">Thanh toán: {{ $paymentText }}</div>
+                        <div class="muted">
+                            Trạng thái:
+                            {{ $booking->payment && $booking->payment->payment_status == 'paid' ? 'Đã thanh toán' : 'Chờ thanh toán' }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="activity-item">
+                    <div class="activity-dot">
+                        <i class="bi bi-person-check"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold">
+                            {{ $booking->staff ? 'Đã phân công nhân viên' : 'Chưa phân công nhân viên' }}
+                        </div>
+                        <div class="muted">
+                            {{ $booking->staff->full_name ?? 'Đang chờ xử lý' }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="activity-item border-0">
+                    <div class="activity-dot">
+                        <i class="bi bi-flag"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold">Trạng thái hiện tại</div>
+                        <div class="muted">{{ $statusText }}</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <button class="btn btn-success">Cập nhật</button>
-    </form>
+        <div>
+            <div class="payment-card">
+                <div class="payment-title">Tóm tắt thanh toán</div>
+
+                <div class="pay-row">
+                    <span>Phí dịch vụ</span>
+                    <strong>{{ number_format($booking->total_amount) }}đ</strong>
+                </div>
+
+                <div class="pay-row">
+                    <span>Phụ phí</span>
+                    <strong>0đ</strong>
+                </div>
+
+                <div class="pay-row">
+                    <span>Giảm giá</span>
+                    <strong>0đ</strong>
+                </div>
+
+                <div class="pay-total">
+                    <span>Tổng cộng</span>
+                    <span>{{ number_format($booking->total_amount) }}đ</span>
+                </div>
+
+                <div class="mt-4 p-3" style="background:rgba(255,255,255,.08);border-radius:18px;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="muted" style="color:#d8cccc;">{{ $paymentText }}</div>
+                            <strong>#BH-{{ $booking->booking_id }}</strong>
+                        </div>
+
+                        @if($booking->payment && $booking->payment->payment_status == 'paid')
+                            <span class="pay-status">Đã thanh toán</span>
+                        @else
+                            <span class="pay-status pending">Chờ thanh toán</span>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            <div class="cardx side-card">
+                <div class="card-title">Cập nhật nhanh</div>
+
+                <form action="{{ route('admin.bookings.updateStatus', $booking->booking_id) }}" method="POST">
+                    @csrf
+
+                    <label class="form-label fw-bold">Trạng thái</label>
+                    <select name="status" class="form-select mb-3">
+                        <option value="0" {{ $booking->status == 0 ? 'selected' : '' }}>Chờ xác nhận</option>
+                        <option value="1" {{ $booking->status == 1 ? 'selected' : '' }}>Đã xác nhận</option>
+                        <option value="2" {{ $booking->status == 2 ? 'selected' : '' }}>Đang thực hiện</option>
+                        <option value="3" {{ $booking->status == 3 ? 'selected' : '' }}>Hoàn thành</option>
+                        <option value="4" {{ $booking->status == 4 ? 'selected' : '' }}>Đã hủy</option>
+                    </select>
+
+                    <button class="btn-main w-100">
+                        Cập nhật trạng thái
+                    </button>
+                </form>
+            </div>
+
+            <div class="cardx side-card">
+                <div class="card-title">Hỗ trợ nhanh</div>
+
+                <a href="#" class="quick-btn">
+                    <i class="bi bi-telephone"></i> Gọi khách hàng
+                </a>
+
+                <a href="#" class="quick-btn">
+                    <i class="bi bi-chat-dots"></i> Nhắn tin Zalo
+                </a>
+
+                <a href="#" class="quick-btn">
+                    <i class="bi bi-share"></i> Gửi vị trí cho KTV
+                </a>
+            </div>
+        </div>
+
+    </div>
+
 </div>
 
-<a href="{{ route('admin.bookings.index') }}" class="btn btn-secondary">Quay lại</a>
+<div class="modal fade" id="staffModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:24px;">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Phân công nhân viên</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form action="{{ route('admin.bookings.assignStaff', $booking->booking_id) }}" method="POST">
+                @csrf
+
+                <div class="modal-body">
+                    <label class="form-label fw-bold">Chọn nhân viên</label>
+
+                    <select name="staff_id" class="form-select" required>
+                        <option value="">-- Chọn nhân viên --</option>
+                        @foreach($staffs as $staff)
+                            <option value="{{ $staff->staff_id }}"
+                                {{ $booking->staff_id == $staff->staff_id ? 'selected' : '' }}>
+                                {{ $staff->full_name }} - {{ $staff->skill ?? 'Nhân viên' }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn-soft" data-bs-dismiss="modal">Hủy</button>
+                    <button class="btn-main">Phân công</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="statusModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:24px;">
+            <div class="modal-header border-0">
+                <h5 class="modal-title fw-bold">Cập nhật trạng thái</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form action="{{ route('admin.bookings.updateStatus', $booking->booking_id) }}" method="POST">
+                @csrf
+
+                <div class="modal-body">
+                    <label class="form-label fw-bold">Trạng thái</label>
+
+                    <select name="status" class="form-select" required>
+                        <option value="0" {{ $booking->status == 0 ? 'selected' : '' }}>Chờ xác nhận</option>
+                        <option value="1" {{ $booking->status == 1 ? 'selected' : '' }}>Đã xác nhận</option>
+                        <option value="2" {{ $booking->status == 2 ? 'selected' : '' }}>Đang thực hiện</option>
+                        <option value="3" {{ $booking->status == 3 ? 'selected' : '' }}>Hoàn thành</option>
+                        <option value="4" {{ $booking->status == 4 ? 'selected' : '' }}>Đã hủy</option>
+                    </select>
+                </div>
+
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn-soft" data-bs-dismiss="modal">Hủy</button>
+                    <button class="btn-main">Cập nhật</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @endsection

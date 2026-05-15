@@ -9,7 +9,6 @@ use App\Models\Staff;
 use App\Models\Notification;
 use App\Services\BookingService;
 
-
 class BookingController extends Controller
 {
     protected $bookingService;
@@ -19,60 +18,82 @@ class BookingController extends Controller
         $this->bookingService = $bookingService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $bookings = Booking::with(['customer','bookingDetails.service','staff','payment'])
+        $query = Booking::with(['customer', 'bookingDetails.service', 'staff', 'payment'])
             ->orderBy('booking_date', 'desc')
-            ->orderBy('booking_time', 'desc')
-            ->get();
+            ->orderBy('booking_time', 'desc');
 
-        return view('admin.bookings.index', compact('bookings'));
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $bookings = $query->get();
+
+        $totalBookings = Booking::count();
+        $pendingBookings = Booking::where('status', 0)->count();
+        $todayBookings = Booking::whereDate('booking_date', today())->count();
+        $totalRevenue = Booking::where('status', 3)->sum('total_amount');
+
+        $staffs = Staff::limit(4)->get();
+        $cancelledBookings = Booking::where('status', 4)->count();
+
+        $todayBookings = Booking::whereDate('booking_date', today())
+            ->where('status', '!=', 4)
+            ->count();
+        return view('admin.bookings.index', compact(
+            'bookings',
+        'totalBookings',
+        'pendingBookings',
+        'todayBookings',
+        'cancelledBookings',
+        'totalRevenue',
+        'staffs'
+        ));
     }
 
     public function show($id)
     {
-        $booking = Booking::with(['customer','bookingDetails.service','staff','payment'])->findOrFail($id);
+        $booking = Booking::with(['customer', 'bookingDetails.service', 'staff', 'payment'])->findOrFail($id);
         $staffs = Staff::all();
 
         return view('admin.bookings.show', compact('booking', 'staffs'));
     }
 
-    // ================== PHÂN CÔNG NHÂN VIÊN ==================
     public function assignStaff(Request $request, $id)
-{
-    $request->validate([
-        'staff_id' => 'required'
-    ]);
+    {
+        $request->validate([
+            'staff_id' => 'required'
+        ]);
 
-    $booking = Booking::with(['customer', 'bookingDetails.service'])->findOrFail($id);
+        $booking = Booking::with(['customer', 'bookingDetails.service'])->findOrFail($id);
 
-    $booking->update([
-        'staff_id' => $request->staff_id,
-        'status' => $booking->status == 0 ? 1 : $booking->status
-    ]);
+        $booking->update([
+            'staff_id' => $request->staff_id,
+            'status' => $booking->status == 0 ? 1 : $booking->status
+        ]);
 
-    Notification::create([
-        'user_type'  => 'staff',
-        'user_id'    => $request->staff_id,
-        'title'      => 'Bạn được phân công lịch mới',
-        'content'    => 'Admin đã phân công bạn phụ trách Booking #' . $booking->booking_id . '.',
-        'is_read'    => 0,
-        'created_at' => now()
-    ]);
+        Notification::create([
+            'user_type'  => 'staff',
+            'user_id'    => $request->staff_id,
+            'title'      => 'Bạn được phân công lịch mới',
+            'content'    => 'Admin đã phân công bạn phụ trách Booking #' . $booking->booking_id . '.',
+            'is_read'    => 0,
+            'created_at' => now()
+        ]);
 
-    Notification::create([
-        'user_type'  => 'customer',
-        'user_id'    => $booking->customer_id,
-        'title'      => 'Lịch đặt đã được phân công nhân viên',
-        'content'    => 'Booking #' . $booking->booking_id . ' của bạn đã có nhân viên phụ trách.',
-        'is_read'    => 0,
-        'created_at' => now()
-    ]);
+        Notification::create([
+            'user_type'  => 'customer',
+            'user_id'    => $booking->customer_id,
+            'title'      => 'Lịch đặt đã được phân công nhân viên',
+            'content'    => 'Booking #' . $booking->booking_id . ' của bạn đã có nhân viên phụ trách.',
+            'is_read'    => 0,
+            'created_at' => now()
+        ]);
 
-    return redirect()->back()->with('success', 'Phân công nhân viên thành công!');
-}
+        return redirect()->back()->with('success', 'Phân công nhân viên thành công!');
+    }
 
-    // ================== CẬP NHẬT TRẠNG THÁI ==================
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
@@ -82,19 +103,18 @@ class BookingController extends Controller
         $booking = Booking::findOrFail($id);
 
         $booking->update([
-            'status' => (int)$request->status
+            'status' => (int) $request->status
         ]);
 
-        // MESSAGE STATUS
-        $statusText = "Đã cập nhật trạng thái";
+        $statusText = match ((int) $booking->status) {
+            0 => 'Chờ xác nhận',
+            1 => 'Đã xác nhận',
+            2 => 'Đang thực hiện',
+            3 => 'Hoàn thành',
+            4 => 'Đã hủy',
+            default => 'Đã cập nhật trạng thái',
+        };
 
-        if ($booking->status == 0) $statusText = "Chờ xác nhận";
-        if ($booking->status == 1) $statusText = "Đã xác nhận";
-        if ($booking->status == 2) $statusText = "Đang thực hiện";
-        if ($booking->status == 3) $statusText = "Hoàn thành";
-        if ($booking->status == 4) $statusText = "Đã hủy";
-
-        // THÔNG BÁO CHO CUSTOMER
         Notification::create([
             'user_type'  => 'customer',
             'user_id'    => $booking->customer_id,

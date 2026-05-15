@@ -186,8 +186,8 @@
 
                 <!-- EXPERT -->
                 <li class="nav-item">
-                    <a class="nav-link"
-                       href="#">
+                    <a href="{{ route('customer.home') }}#experts-section"
+                        class="nav-link">
                         Chuyên gia
                     </a>
                 </li>

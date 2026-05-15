@@ -319,13 +319,35 @@
     <div>
         <div class="profile-card">
             <div class="avatar-wrap">
+                @php
+    $staffName = $staff->full_name ?? session('staff_name') ?? 'Nhân viên';
+    $staffEmail = $staff->email ?? '';
+    $staffPhone = $staff->phone ?? '';
+    $staffAddress = $staff->address ?? '';
+    $staffSkill = $staff->skill ?? 'Chuyên viên làm đẹp';
+    $staffBio = $staff->bio ?? 'Chuyên viên BeautyHome với kinh nghiệm chăm sóc sắc đẹp tận tâm. Luôn hướng tới trải nghiệm thư giãn, an toàn và phù hợp với từng khách hàng.';
+
+    $femalePortraits = [
+        'https://randomuser.me/api/portraits/women/44.jpg',
+        'https://randomuser.me/api/portraits/women/65.jpg',
+        'https://randomuser.me/api/portraits/women/68.jpg',
+        'https://randomuser.me/api/portraits/women/71.jpg',
+        'https://randomuser.me/api/portraits/women/72.jpg',
+        'https://randomuser.me/api/portraits/women/76.jpg',
+        'https://randomuser.me/api/portraits/women/79.jpg',
+        'https://randomuser.me/api/portraits/women/81.jpg'
+    ];
+
+    $avatarImage = $femalePortraits[
+        ($staff->staff_id ?? session('staff_id') ?? 1) % count($femalePortraits)
+    ];
+@endphp
+
                 <img class="avatar"
-     src="https://i.pravatar.cc/200?img={{ (session('staff_id') % 70) + 1 }}"
+     src="{{ $avatarImage }}"
      alt="avatar">
 
-                <div class="avatar-edit">
-                    <i class="bi bi-camera"></i>
-                </div>
+                
             </div>
 
             <div class="staff-name">
@@ -365,13 +387,7 @@
 
                 <div class="row g-4">
 
-                    <div class="col-md-12">
-                        <label class="form-label">Ảnh đại diện</label>
-                        <input type="file"
-                               name="image"
-                               class="form-control"
-                               accept="image/*">
-                    </div>
+                    
 
                     <div class="col-md-6">
                         <label class="form-label">Họ và tên</label>
