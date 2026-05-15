@@ -57,7 +57,7 @@ Hệ thống hỗ trợ quản lý cho:
 
 ---
 
-## SInh viên thực hiện
+## Sinh viên thực hiện
 
 - Nguyễn Thị Trang - 2251162180 - 64HTTT3
 
