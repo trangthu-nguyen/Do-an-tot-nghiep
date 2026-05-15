@@ -1,5 +1,5 @@
 # ĐỒ ÁN TỐT NGHIỆP
-## Website Đặt Lịch Dịch Vụ Làm Đẹp Tại Nhà
+## Website Đặt Lịch Dịch Vụ Làm Đẹp Tại Nhà - BeautyHome
 
 ## Giới thiệu
 Hệ thống hỗ trợ khách hàng đặt lịch các dịch vụ làm đẹp tại nhà một cách nhanh chóng và tiện lợi.
@@ -57,9 +57,9 @@ Hệ thống hỗ trợ quản lý cho:
 
 ---
 
-## Thành viên thực hiện
+## SInh viên thực hiện
 
-- Nguyễn Thị Trang
+- Nguyễn Thị Trang - 2251162180 - 64HTTT3
 
 ---
 
