@@ -1,75 +1,270 @@
 @extends('admin.layout')
 
-@section('title', 'Quản lý đánh giá')
+@section('title','Quản lý Đánh giá & Phản hồi')
 
 @section('content')
 
-<h3 class="fw-bold mb-4" style="color:#7b5554;">⭐ Danh sách đánh giá</h3>
+<style>
+    :root{--primary:#7b5554;--dark:#2f2323;--muted:#8a7e7e;--border:#eadede;--soft:#faf7f7}
+    .page-title{font-family:'Noto Serif',serif;font-size:34px;font-weight:900;color:var(--primary)}
+    .page-sub{color:var(--muted);font-weight:600}
+    .filter-bar,.list-card,.detail-card{background:white;border:1px solid var(--border);border-radius:26px;box-shadow:0 12px 32px rgba(123,85,84,.06)}
+    .filter-bar{padding:16px;margin:22px 0}
+    .filter-btn{display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:10px 16px;background:#f5f2f2;color:#6d5f5f;text-decoration:none;font-weight:900;font-size:13px}
+    .filter-btn.active{background:var(--primary);color:white}
+    .main-grid{display:grid;grid-template-columns:1fr 360px;gap:22px}
+    .list-card{min-height:650px;overflow:hidden}
+    .table th{font-size:11px;text-transform:uppercase;color:#9b8f8f;padding:16px;border-bottom:1px solid #f3eeee}
+    .table td{padding:16px;border-bottom:1px solid #f7eeee;vertical-align:middle}
+    .feedback-row{cursor:pointer;text-decoration:none;color:inherit}
+    .feedback-row.active tr,.table tbody tr:hover{background:#fff6f6}
+    .avatar{width:44px;height:44px;border-radius:50%;object-fit:cover;border:3px solid #f1dddd}
+    .name{font-weight:900;color:var(--dark)}
+    .small-muted{font-size:12px;color:var(--muted)}
+    .stars{color:#ffb648;font-size:13px;white-space:nowrap}
+    .content-short{max-width:230px;color:#6f6464;font-size:13px}
+    .badge-status{border-radius:999px;padding:6px 10px;font-size:11px;font-weight:900}
+    .st-0{background:#fff4d6;color:#a16207}.st-1{background:#dcfce7;color:#15803d}.st-2{background:#ffe4e6;color:#be123c}
+    .detail-card{padding:26px;position:sticky;top:24px}
+    .detail-title{font-family:'Noto Serif',serif;color:var(--primary);font-size:26px;font-weight:900;margin-bottom:18px}
+    .detail-avatar{width:76px;height:76px;border-radius:50%;object-fit:cover;border:4px solid #f1dddd}
+    .detail-name{font-size:20px;font-weight:900;color:var(--dark);margin-top:12px}
+    .info-block{margin-top:22px}
+    .info-label{font-size:11px;text-transform:uppercase;color:#9b8f8f;font-weight:900;margin-bottom:6px}
+    .info-value{color:#4f4343;line-height:1.8;font-weight:700}
+    .review-box{background:var(--soft);border-radius:18px;padding:18px;color:#6f6464;line-height:1.9;font-style:italic;min-height:120px}
+    .action-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px}
+    .btn-action{border:none;border-radius:14px;padding:12px;font-weight:900}
+    .btn-approve{background:var(--primary);color:white}
+    .btn-reject{background:#f3eeee;color:#6d5d5d}
+    .btn-delete{background:#ffefef;color:#d11a2a;grid-column:1/3}
+    @media(max-width:1100px){.main-grid{grid-template-columns:1fr}.detail-card{position:static}}
+</style>
 
-<div class="card shadow-sm border-0" style="border-radius:18px;">
-    <div class="card-body p-3">
+@php
+    function feedbackText($fb) {
+        return $fb->content
+            ?? $fb->comment
+            ?? $fb->message
+            ?? $fb->feedback_content
+            ?? 'Chưa có nội dung phản hồi.';
+    }
 
-        @if($feedbacks->count() == 0)
-            <div class="alert text-center"
-                 style="background:#efeded; color:#504443; border-radius:14px;">
-                Chưa có đánh giá nào.
-            </div>
-        @else
-            <table class="table table-hover align-middle mb-0">
-                <thead style="background:#7b5554; color:white;">
+    function feedbackStatusText($status) {
+        return match((int)$status) {
+            1 => 'Đã duyệt',
+            2 => 'Từ chối',
+            default => 'Chưa duyệt',
+        };
+    }
+@endphp
+
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+    <div>
+       
+        <div class="page-sub">Theo dõi và kiểm duyệt ý kiến khách hàng về chất lượng dịch vụ.</div>
+    </div>
+</div>
+
+@if(session('success'))
+    <div class="alert alert-success mt-3">{{ session('success') }}</div>
+@endif
+
+<div class="filter-bar">
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{{ route('admin.feedbacks.index') }}"
+           class="filter-btn {{ request('status') === null ? 'active' : '' }}">
+            Tất cả {{ $totalCount }}
+        </a>
+
+        <a href="{{ route('admin.feedbacks.index', ['status' => 0]) }}"
+           class="filter-btn {{ request('status') === '0' ? 'active' : '' }}">
+            Chưa duyệt {{ $pendingCount }}
+        </a>
+
+        <a href="{{ route('admin.feedbacks.index', ['status' => 1]) }}"
+           class="filter-btn {{ request('status') === '1' ? 'active' : '' }}">
+            Đã duyệt {{ $approvedCount }}
+        </a>
+
+        <a href="{{ route('admin.feedbacks.index', ['status' => 2]) }}"
+           class="filter-btn {{ request('status') === '2' ? 'active' : '' }}">
+            Từ chối {{ $rejectedCount }}
+        </a>
+    </div>
+</div>
+
+<div class="main-grid">
+
+    <div class="list-card">
+        <div class="table-responsive">
+            <table class="table mb-0 align-middle">
+                <thead>
                     <tr>
-                        <th width="60" style="border-top-left-radius:14px;">ID</th>
                         <th>Khách hàng</th>
                         <th>Dịch vụ</th>
-                        <th width="170">Đánh giá</th>
-                        <th>Nhận xét</th>
-                        <th width="170" style="border-top-right-radius:14px;">Ngày tạo</th>
+                        <th>Đánh giá</th>
+                        <th>Nội dung phản hồi</th>
+                        <th>Trạng thái</th>
+                        <th>Ngày</th>
                     </tr>
                 </thead>
 
                 <tbody>
-                    @foreach($feedbacks as $fb)
+                    @forelse($feedbacks as $fb)
+                        @php
+                            $customer = $fb->customer;
+                            $service = optional(optional(optional($fb->booking)->bookingDetails->first())->service);
+                            $text = feedbackText($fb);
+                            $rating = $fb->rating ?? $fb->star ?? 5;
+                        @endphp
+
+                        @php
+    $feedbackUrl = route('admin.feedbacks.index', array_filter([
+        'status' => request('status'),
+        'feedback_id' => $fb->feedback_id,
+    ], fn($value) => $value !== null && $value !== ''));
+@endphp
+
+<tr onclick="window.location.href='{{ $feedbackUrl }}'"
+    class="{{ $selectedFeedback && $selectedFeedback->feedback_id == $fb->feedback_id ? 'active' : '' }}"
+    style="cursor:pointer;">
+
+    <td>
+        <div class="d-flex align-items-center gap-3">
+            <img src="{{ $customer->avatar_url ?? asset('uploads/avatar/default-avatar.png') }}" class="avatar">
+
+            <div>
+                <div class="name">{{ $customer->full_name ?? 'Khách hàng' }}</div>
+                <div class="small-muted">{{ $customer->phone ?? '' }}</div>
+            </div>
+        </div>
+    </td>
+
+    <td>
+        <div class="name" style="font-size:13px;">
+            {{ $service->service_name ?? 'Dịch vụ' }}
+        </div>
+    </td>
+
+    <td>
+        <div class="stars">
+            @for($i = 1; $i <= 5; $i++)
+                <i class="bi {{ $i <= $rating ? 'bi-star-fill' : 'bi-star' }}"></i>
+            @endfor
+        </div>
+    </td>
+
+    <td>
+        <div class="content-short">
+            {{ \Illuminate\Support\Str::limit($text, 60) }}
+        </div>
+    </td>
+
+    <td>
+        <span class="badge-status st-{{ (int)($fb->status ?? 0) }}">
+            {{ feedbackStatusText($fb->status ?? 0) }}
+        </span>
+    </td>
+
+    <td class="small-muted">
+        {{ $fb->created_at ? \Carbon\Carbon::parse($fb->created_at)->format('d/m/Y') : 'N/A' }}
+    </td>
+</tr>
+                    @empty
                         <tr>
-                            <td class="fw-semibold">{{ $fb->feedback_id }}</td>
-
-                            <td>{{ $fb->customer->full_name ?? 'Không rõ' }}</td>
-
-                            <td class="text-muted">
-                                @if($fb->booking && $fb->booking->bookingDetails)
-                                    @foreach($fb->booking->bookingDetails as $detail)
-                                        {{ $detail->service->service_name ?? 'Không rõ' }}@if(!$loop->last), @endif
-                                    @endforeach
-                                @else
-                                    Không rõ
-                                @endif
-                            </td>
-
-                            <td>
-                                @for($i=1; $i<=5; $i++)
-                                    @if($i <= $fb->rating)
-                                        <span style="color:#ebbab9; font-size: 18px;">★</span>
-                                    @else
-                                        <span style="color:#d4c2c2; font-size: 18px;">★</span>
-                                    @endif
-                                @endfor
-                                <span class="text-muted">({{ $fb->rating }}/5)</span>
-                            </td>
-
-                            <td class="text-muted">
-                                {{ $fb->comment ?? 'Không có nhận xét' }}
-                            </td>
-
-                            <td class="text-muted">
-                                {{ $fb->created_at }}
+                            <td colspan="6" class="text-center text-muted py-5">
+                                Chưa có đánh giá nào.
                             </td>
                         </tr>
-                    @endforeach
+                    @endforelse
                 </tbody>
-
             </table>
-        @endif
-
+        </div>
     </div>
+
+    <div>
+        @if($selectedFeedback)
+            @php
+                $customer = $selectedFeedback->customer;
+                $service = optional(optional(optional($selectedFeedback->booking)->bookingDetails->first())->service);
+                $selectedText = feedbackText($selectedFeedback);
+                $selectedRating = $selectedFeedback->rating ?? $selectedFeedback->star ?? 5;
+            @endphp
+
+            <div class="detail-card text-center">
+                <div class="detail-title">Chi tiết phản hồi</div>
+
+                <img src="{{ $customer->avatar_url ?? asset('uploads/avatar/default-avatar.png') }}" class="detail-avatar">
+
+                <div class="detail-name">{{ $customer->full_name ?? 'Khách hàng' }}</div>
+                <div class="small-muted">Khách hàng thân thiết</div>
+
+                <div class="stars mt-2">
+                    @for($i = 1; $i <= 5; $i++)
+                        <i class="bi {{ $i <= $selectedRating ? 'bi-star-fill' : 'bi-star' }}"></i>
+                    @endfor
+                </div>
+
+                <div class="info-block text-start">
+                    <div class="info-label">Trạng thái</div>
+                    <div>
+                        <span class="badge-status st-{{ (int)$selectedFeedback->status }}">
+                            {{ feedbackStatusText($selectedFeedback->status) }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="info-block text-start">
+                    <div class="info-label">Dịch vụ đã sử dụng</div>
+                    <div class="info-value">{{ $service->service_name ?? 'Dịch vụ' }}</div>
+                </div>
+
+                <div class="info-block text-start">
+                    <div class="info-label">Thời gian đánh giá</div>
+                    <div class="info-value">
+                        {{ $selectedFeedback->created_at ? \Carbon\Carbon::parse($selectedFeedback->created_at)->format('d/m/Y - H:i') : 'N/A' }}
+                    </div>
+                </div>
+
+                <div class="info-block text-start">
+                    <div class="info-label">Nội dung phản hồi</div>
+                    <div class="review-box">
+                        “{{ $selectedText }}”
+                    </div>
+                </div>
+
+                <div class="action-row">
+                    @if((int)$selectedFeedback->status !== 1)
+                        <form action="{{ route('admin.feedbacks.approve', $selectedFeedback->feedback_id) }}" method="POST">
+                            @csrf
+                            <button class="btn-action btn-approve w-100">Phê duyệt</button>
+                        </form>
+                    @endif
+
+                    @if((int)$selectedFeedback->status !== 2)
+                        <form action="{{ route('admin.feedbacks.reject', $selectedFeedback->feedback_id) }}" method="POST">
+                            @csrf
+                            <button class="btn-action btn-reject w-100">Từ chối</button>
+                        </form>
+                    @endif
+
+                    <form action="{{ route('admin.feedbacks.destroy', $selectedFeedback->feedback_id) }}"
+                          method="POST"
+                          onsubmit="return confirm('Bạn chắc chắn muốn xóa phản hồi này?')">
+                        @csrf
+                        @method('DELETE')
+                        <button class="btn-action btn-delete w-100">Xóa</button>
+                    </form>
+                </div>
+            </div>
+        @else
+            <div class="detail-card text-center text-muted">
+                Chọn một phản hồi để xem chi tiết.
+            </div>
+        @endif
+    </div>
+
 </div>
 
 @endsection

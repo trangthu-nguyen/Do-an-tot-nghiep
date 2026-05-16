@@ -68,9 +68,17 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/payments/{id}/update-status', [AdminPaymentController::class, 'updateStatus'])->name('payments.updateStatus');
 
         Route::get('/feedbacks', [AdminFeedbackController::class, 'index'])->name('feedbacks.index');
+        Route::post('/feedbacks/{id}/approve', [AdminFeedbackController::class, 'approve'])->name('feedbacks.approve');
+        Route::post('/feedbacks/{id}/reject', [AdminFeedbackController::class, 'reject'])->name('feedbacks.reject');
+        Route::delete('/feedbacks/{id}', [AdminFeedbackController::class, 'destroy'])->name('feedbacks.destroy');
 
         Route::get('/notifications', [AdminNotificationController::class, 'index'])->name('notifications.index');
         Route::post('/notifications/{id}/read', [AdminNotificationController::class, 'markAsRead'])->name('notifications.read');
+    
+
+        Route::post('/notifications/read-all', [AdminNotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
+
+       
     });
 });
 
