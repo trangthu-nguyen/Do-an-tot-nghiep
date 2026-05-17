@@ -22,7 +22,7 @@ class ServiceController extends Controller
         }
 
         $services = $query->get();
-        $categories = Category::all();
+        $categories = Category::withCount('services')->get();
 
         $totalServices = Service::count();
         $activeServices = Service::where('status', 1)->count();

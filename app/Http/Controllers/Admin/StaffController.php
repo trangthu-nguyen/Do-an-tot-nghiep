@@ -6,27 +6,108 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Staff;
 use App\Models\Booking;
+use App\Models\StaffSchedule;
+use App\Models\Notification;
+use Carbon\Carbon;
 
 class StaffController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $staffs = Staff::withCount('bookings')
-            ->orderBy('staff_id', 'desc')
-            ->get();
+        $weekStart = $request->filled('week')
+            ? Carbon::parse($request->week)->startOfWeek()
+            : now()->startOfWeek();
+
+        $weekEnd = $weekStart->copy()->endOfWeek();
+
+        $query = Staff::withCount('bookings')
+            ->orderBy('staff_id', 'desc');
+
+        if ($request->filled('skill')) {
+            $query->where('skill', 'like', '%' . $request->skill . '%');
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $staffs = $query->get();
+
+        $schedules = StaffSchedule::whereBetween('work_date', [
+        $weekStart->toDateString(),
+        $weekEnd->toDateString()
+    ])
+    ->orderBy('start_time')
+    ->get()
+    ->groupBy(function ($item) {
+        return $item->staff_id . '_' . Carbon::parse($item->work_date)->format('Y-m-d');
+    });
+
+        $weekDays = collect(range(0, 6))->map(function ($i) use ($weekStart) {
+            return $weekStart->copy()->addDays($i);
+        });
 
         $totalStaff = Staff::count();
         $activeStaff = Staff::where('status', 1)->count();
+
         $todayBookings = Booking::whereDate('booking_date', today())
             ->where('status', '!=', 4)
             ->count();
 
+        $pendingSchedules = StaffSchedule::where('status', 'available')->count();
+        $approvedSchedules = StaffSchedule::where('status', 'approved')->count();
+        $busySchedules = StaffSchedule::where('status', 'busy')->count();
+
         return view('admin.staffs.index', compact(
             'staffs',
+            'schedules',
+            'weekDays',
+            'weekStart',
+            'weekEnd',
             'totalStaff',
             'activeStaff',
-            'todayBookings'
+            'todayBookings',
+            'pendingSchedules',
+            'approvedSchedules',
+            'busySchedules'
         ));
+    }
+
+    public function approveSchedule($id)
+    {
+        $schedule = StaffSchedule::findOrFail($id);
+
+        $schedule->update([
+            'status' => 'approved',
+            'updated_at' => now()
+        ]);
+
+        Notification::create([
+            'user_type'  => 'staff',
+            'user_id'    => $schedule->staff_id,
+            'title'      => 'Lịch làm đã được duyệt',
+            'content'    => 'Lịch làm ngày ' . Carbon::parse($schedule->work_date)->format('d/m/Y') . ' của bạn đã được admin duyệt.',
+            'is_read'    => 0,
+            'created_at' => now()
+        ]);
+
+        return redirect()
+            ->back()
+            ->with('success', 'Đã duyệt lịch làm của nhân viên!');
+    }
+
+    public function approveAllSchedules()
+    {
+        $count = StaffSchedule::where('status', 'available')->count();
+
+        StaffSchedule::where('status', 'available')->update([
+            'status' => 'approved',
+            'updated_at' => now()
+        ]);
+
+        return redirect()
+            ->back()
+            ->with('success', 'Đã duyệt ' . $count . ' lịch làm đang chờ!');
     }
 
     public function create()

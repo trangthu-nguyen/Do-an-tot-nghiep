@@ -98,33 +98,34 @@
                 <i class="bi bi-house-door"></i> Dashboard
             </a>
 
-            <a href="{{ route('admin.categories.index') }}" class="{{ request()->routeIs('admin.categories.*') ? 'active' : '' }}">
-                <i class="bi bi-tags"></i> Danh mục
-            </a>
+            
 
-            <a href="{{ route('admin.services.index') }}" class="{{ request()->routeIs('admin.services.*') ? 'active' : '' }}">
-                <i class="bi bi-box-seam"></i> Dịch vụ
-            </a>
+            <a href="{{ route('admin.services.index') }}"
+   class="{{ request()->routeIs('admin.services.*') || request()->routeIs('admin.categories.*') ? 'active' : '' }}">
+    <i class="bi bi-box-seam"></i> Dịch vụ
+</a>
 
             <a href="{{ route('admin.bookings.index') }}" class="{{ request()->routeIs('admin.bookings.*') ? 'active' : '' }}">
-                <i class="bi bi-calendar-check"></i> Quản lý đặt lịch
+                <i class="bi bi-calendar-check"></i> Lịch đặt
             </a>
 
             <a href="{{ route('admin.staffs.index') }}" class="{{ request()->routeIs('admin.staffs.*') ? 'active' : '' }}">
-                <i class="bi bi-people"></i> Quản lý nhân viên
+                <i class="bi bi-people"></i> Nhân viên
             </a>
 
             <a href="{{ route('admin.customers.index') }}" class="{{ request()->routeIs('admin.customers.*') ? 'active' : '' }}">
-                <i class="bi bi-person-lines-fill"></i> Quản lý khách hàng
-            </a>
-
-            <a href="{{ route('admin.feedbacks.index') }}" class="{{ request()->routeIs('admin.feedbacks.*') ? 'active' : '' }}">
-                <i class="bi bi-star"></i> Đánh giá
+                <i class="bi bi-person-lines-fill"></i> Khách hàng
             </a>
 
             <a href="{{ route('admin.payments.index') }}" class="{{ request()->routeIs('admin.payments.*') ? 'active' : '' }}">
                 <i class="bi bi-credit-card"></i> Thanh toán
             </a>
+            
+            <a href="{{ route('admin.feedbacks.index') }}" class="{{ request()->routeIs('admin.feedbacks.*') ? 'active' : '' }}">
+                <i class="bi bi-star"></i> Đánh giá
+            </a>
+
+            
 
             <hr>
 

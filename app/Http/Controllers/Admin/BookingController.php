@@ -8,6 +8,7 @@ use App\Models\Booking;
 use App\Models\Staff;
 use App\Models\Notification;
 use App\Services\BookingService;
+use App\Models\StaffSchedule;
 
 class BookingController extends Controller
 {
@@ -53,12 +54,36 @@ class BookingController extends Controller
     }
 
     public function show($id)
-    {
-        $booking = Booking::with(['customer', 'bookingDetails.service', 'staff', 'payment'])->findOrFail($id);
-        $staffs = Staff::all();
+{
+    $booking = Booking::with([
+        'customer',
+        'bookingDetails.service',
+        'staff',
+        'payment'
+    ])->findOrFail($id);
 
-        return view('admin.bookings.show', compact('booking', 'staffs'));
-    }
+    $bookingDate = $booking->booking_date;
+    $bookingTime = $booking->booking_time;
+
+    $staffs = Staff::where('status', 1)
+        ->whereIn('staff_id', function ($query) use ($bookingDate, $bookingTime) {
+            $query->select('staff_id')
+                ->from('staff_schedules')
+                ->whereDate('work_date', $bookingDate)
+                ->whereIn('status', ['available', 'approved'])
+                ->whereTime('start_time', '<=', $bookingTime)
+                ->whereTime('end_time', '>=', $bookingTime);
+        })
+        ->whereDoesntHave('bookings', function ($q) use ($bookingDate, $bookingTime, $booking) {
+            $q->whereDate('booking_date', $bookingDate)
+              ->where('booking_time', $bookingTime)
+              ->where('booking_id', '!=', $booking->booking_id)
+              ->whereIn('status', [0, 1, 2]);
+        })
+        ->get();
+
+    return view('admin.bookings.show', compact('booking', 'staffs'));
+}
 
     public function assignStaff(Request $request, $id)
     {

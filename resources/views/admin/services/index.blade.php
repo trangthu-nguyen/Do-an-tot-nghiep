@@ -1,159 +1,171 @@
 @extends('admin.layout')
 
-@section('title', 'Quản lý dịch vụ')
+@section('title', 'Quản lý Dịch vụ')
 
 @section('content')
 
 <style>
-    .svc-top,.svc-card,.insight{background:white;border:1px solid #f0e4e4;border-radius:22px;box-shadow:0 12px 32px rgba(123,85,84,.06)}
-    .svc-top{padding:24px;margin-bottom:20px;display:flex;justify-content:space-between;gap:18px;align-items:center}
-    .svc-label{font-size:12px;font-weight:900;color:#9b8f8f}
-    .svc-heading{font-size:30px;font-weight:900;color:#2f2323;margin:6px 0}
-    .svc-sub{color:#7d7272;font-size:14px;margin:0}
-    .btn-svc{background:#7b5554;color:white;border-radius:14px;padding:11px 16px;text-decoration:none;font-weight:800;border:0}
-    .btn-svc:hover{background:#684847;color:white}
-    .filter-box{padding:16px 20px;margin-bottom:20px}
-    .filter-box select{border-radius:14px;border:1px solid #eadede;padding:9px 14px}
-    .svc-layout{display:grid;grid-template-columns:1fr 280px;gap:20px}
-    .table-title{padding:20px 24px;border-bottom:1px solid #f1e7e7;font-size:20px;font-weight:900;color:#2f2323}
-    .table th{font-size:12px;text-transform:uppercase;color:#8b8080;padding:15px 18px}
-    .table td{padding:16px 18px;vertical-align:middle;border-bottom:1px solid #f7eeee}
-    .svc-img{width:58px;height:46px;object-fit:cover;border-radius:12px;border:1px solid #eadede}
-    .svc-name{font-weight:900;color:#2f2323}
-    .svc-desc{font-size:12px;color:#8d8181}
-    .cat-pill{background:#f4eeee;color:#7b5554;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:800}
-    .status{padding:6px 12px;border-radius:999px;font-size:12px;font-weight:900}
+    :root{--primary:#7b5554;--dark:#2f2323;--muted:#8a7e7e;--border:#eadede;--soft:#faf7f7}
+    .service-page{display:grid;grid-template-columns:280px 1fr;gap:24px}
+    .left-card,.service-card,.promo-card{background:white;border:1px solid var(--border);border-radius:24px;box-shadow:0 12px 32px rgba(123,85,84,.06)}
+    .page-title{font-family:'Noto Serif',serif;font-size:30px;font-weight:900;color:var(--primary);margin-bottom:24px}
+    .left-card{padding:22px}
+    .left-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+    .left-title{font-family:'Noto Serif',serif;font-weight:900;color:var(--primary);font-size:20px}
+    .add-mini{border:0;background:#f7eeee;color:var(--primary);border-radius:999px;padding:7px 11px;font-size:12px;font-weight:900;text-decoration:none}
+    .cat-link{display:flex;align-items:center;gap:12px;padding:14px;border-radius:16px;text-decoration:none;color:#655858;font-weight:800;margin-bottom:8px;transition:.2s}
+    .cat-link:hover,.cat-link.active{background:#fff3f3;color:var(--primary)}
+    .cat-icon{width:34px;height:34px;border-radius:12px;background:#f7eeee;color:var(--primary);display:flex;align-items:center;justify-content:center}
+    .cat-count{margin-left:auto;background:#f4eeee;color:#7b5554;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:900}
+    .promo-card{margin-top:18px;height:180px;overflow:hidden;position:relative;background:linear-gradient(135deg,#7b5554,#c99796);color:white;padding:22px;display:flex;align-items:end}
+    .promo-card:before{content:'';position:absolute;inset:0;background:rgba(0,0,0,.15)}
+    .promo-text{position:relative;font-weight:800;line-height:1.7}
+    .service-card{padding:0;overflow:hidden}
+    .service-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;padding:24px;border-bottom:1px solid #f3eeee}
+    .service-title{font-family:'Noto Serif',serif;font-size:26px;font-weight:900;color:var(--primary)}
+    .service-sub{color:#8a7e7e;font-weight:600;font-size:14px;margin-top:4px}
+    .btn-main{border:0;background:var(--primary);color:white;border-radius:14px;padding:12px 18px;font-weight:900;text-decoration:none}
+    .btn-main:hover{background:#684847;color:white}
+    .table th{font-size:11px;text-transform:uppercase;color:#9b8f8f;padding:16px;border-bottom:1px solid #f2eeee}
+    .table td{padding:18px 16px;vertical-align:middle;border-bottom:1px solid #f7eeee}
+    .svc-name{font-weight:900;color:var(--dark)}
+    .svc-desc{font-size:12px;color:#8a7e7e;margin-top:3px;max-width:240px}
+    .price{font-weight:900;color:#7b5554}
+    .duration{font-weight:800;color:#5f5656}
+    .badge-status{border-radius:999px;padding:7px 11px;font-size:11px;font-weight:900}
     .active{background:#dcfce7;color:#15803d}
-    .inactive{background:#eee;color:#777}
-    .action-btn{border:0;background:transparent;color:#7b5554;font-size:16px}
-    .insight{padding:22px;height:max-content}
-    .insight-title{font-size:20px;font-weight:900;color:#7b5554;margin-bottom:18px}
-    .insight-box{background:#fff1f1;border-radius:18px;padding:16px;margin-bottom:14px}
-    .insight-num{font-size:26px;font-weight:900;color:#7b5554}
-    @media(max-width:991px){.svc-top{flex-direction:column;align-items:flex-start}.svc-layout{grid-template-columns:1fr}}
+    .inactive{background:#eeeeee;color:#777}
+    .action-wrap{display:flex;justify-content:flex-end;gap:8px}
+    .action-btn{width:34px;height:34px;border-radius:12px;border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;background:white;color:#7b5554;text-decoration:none}
+    .delete-btn{color:#ba1a1a}
+    .footer-note{padding:16px 24px;color:#8a7e7e;font-size:13px;font-weight:700}
+    @media(max-width:1100px){.service-page{grid-template-columns:1fr}}
 </style>
 
-<div class="svc-top">
-    <div>
-      
-        <h1 class="svc-heading">Danh mục dịch vụ</h1>
-        <p class="svc-sub">Quản lý các dịch vụ làm đẹp, giá tiền, thời gian và trạng thái hiển thị.</p>
-    </div>
+@php
+    $selectedCategory = $categories->firstWhere('category_id', request('category_id'));
+@endphp
 
-    <a href="{{ route('admin.services.create') }}" class="btn-svc">
-        <i class="bi bi-plus-circle"></i> Thêm dịch vụ
-    </a>
-</div>
+<div class="page-title">Quản lý Dịch vụ</div>
 
-<form method="GET" action="{{ route('admin.services.index') }}" class="svc-card filter-box">
-    <div class="d-flex flex-wrap gap-3 align-items-center">
-        <strong><i class="bi bi-funnel"></i> Lọc theo</strong>
+@if(session('success'))
+    <div class="alert alert-success rounded-4">{{ session('success') }}</div>
+@endif
 
-        <select name="category_id" onchange="this.form.submit()">
-            <option value="">Tất cả danh mục</option>
+@if(session('error'))
+    <div class="alert alert-danger rounded-4">{{ session('error') }}</div>
+@endif
+
+<div class="service-page">
+
+    <aside>
+        <div class="left-card">
+            <div class="left-head">
+                <div class="left-title">Danh mục</div>
+                <a href="{{ route('admin.categories.create') }}" class="add-mini">
+                    <i class="bi bi-plus-circle"></i> Thêm mới
+                </a>
+            </div>
+
+            <a href="{{ route('admin.services.index') }}"
+               class="cat-link {{ request('category_id') ? '' : 'active' }}">
+                <span class="cat-icon"><i class="bi bi-grid"></i></span>
+                Tất cả dịch vụ
+                <span class="cat-count">{{ $totalServices }}</span>
+            </a>
+
             @foreach($categories as $cat)
-                <option value="{{ $cat->category_id }}" {{ request('category_id') == $cat->category_id ? 'selected' : '' }}>
-                    {{ $cat->category_name }}
-                </option>
+                <a href="{{ route('admin.services.index', ['category_id' => $cat->category_id]) }}"
+                   class="cat-link {{ request('category_id') == $cat->category_id ? 'active' : '' }}">
+                    <span class="cat-icon"><i class="bi bi-stars"></i></span>
+                    <span>{{ $cat->category_name }}</span>
+                    <span class="cat-count">{{ $cat->services_count ?? $cat->services()->count() }}</span>
+                </a>
             @endforeach
-        </select>
+        </div>
 
-        <select name="status" onchange="this.form.submit()">
-            <option value="">Tất cả trạng thái</option>
-            <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>Hoạt động</option>
-            <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>Ẩn</option>
-        </select>
+        <div class="promo-card">
+            <div class="promo-text">
+                Mẹo quản trị: Cập nhật hình ảnh dịch vụ thường xuyên để thu hút khách hàng.
+            </div>
+        </div>
+    </aside>
 
-        <span class="text-muted ms-auto">
-            {{ $services->count() }} dịch vụ được tìm thấy
-        </span>
-    </div>
-</form>
+    <section class="service-card">
+        <div class="service-head">
+            <div>
+                <div class="service-title">
+                    Dịch vụ: {{ $selectedCategory->category_name ?? 'Tất cả danh mục' }}
+                </div>
+                <div class="service-sub">
+                    Hiển thị {{ $services->count() }} dịch vụ trong danh mục này
+                </div>
+            </div>
 
-<div class="svc-layout">
-
-    <div class="svc-card overflow-hidden">
-        <div class="table-title">Chi tiết dịch vụ</div>
+            <a href="{{ route('admin.services.create') }}" class="btn-main">
+                <i class="bi bi-plus-lg"></i> Thêm dịch vụ mới
+            </a>
+        </div>
 
         <div class="table-responsive">
             <table class="table align-middle mb-0">
                 <thead>
                     <tr>
                         <th>Dịch vụ</th>
-                        <th>Danh mục</th>
-                        <th>Giá</th>
+                        <th>Giá tiền</th>
                         <th>Thời gian</th>
                         <th>Trạng thái</th>
-                        <th class="text-end">Hành động</th>
+                        <th class="text-end">Thao tác</th>
                     </tr>
                 </thead>
 
                 <tbody>
                     @forelse($services as $sv)
-                        @php
-                            $img = $sv->image
-                                ? asset('uploads/services/'.$sv->image)
-                                : asset('uploads/services/default.jpg');
-                        @endphp
-
                         <tr>
                             <td>
-                                <div class="d-flex align-items-center gap-3">
-                                    <img src="{{ $img }}" class="svc-img" alt="{{ $sv->service_name }}">
-                                    <div>
-                                        <div class="svc-name">{{ $sv->service_name }}</div>
-                                        <div class="svc-desc">{{ \Illuminate\Support\Str::limit($sv->description, 45) }}</div>
-                                    </div>
+                                <div class="svc-name">{{ $sv->service_name }}</div>
+                                <div class="svc-desc">
+                                    {{ \Illuminate\Support\Str::limit($sv->description, 55) }}
                                 </div>
                             </td>
 
-                            <td>
-                                <span class="cat-pill">
-                                    {{ $sv->category->category_name ?? 'Chưa có' }}
-                                </span>
-                            </td>
+                            <td class="price">{{ number_format($sv->price) }}đ</td>
 
-                            <td class="fw-bold text-danger">
-                                {{ number_format($sv->price) }}đ
-                            </td>
-
-                            <td>
-                                {{ $sv->duration }} phút
-                            </td>
+                            <td class="duration">{{ $sv->duration }} phút</td>
 
                             <td>
                                 @if($sv->status == 1)
-                                    <span class="status active">Active</span>
+                                    <span class="badge-status active">Đang kinh doanh</span>
                                 @else
-                                    <span class="status inactive">Hidden</span>
+                                    <span class="badge-status inactive">Ngừng kinh doanh</span>
                                 @endif
                             </td>
 
-                            <td class="text-end">
-                                <a href="{{ route('admin.services.edit', $sv->service_id) }}"
-                                   class="action-btn"
-                                   title="Sửa">
-                                    <i class="bi bi-pencil-fill"></i>
-                                </a>
+                            <td>
+                                <div class="action-wrap">
+                                    <a href="{{ route('admin.services.edit', $sv->service_id) }}"
+                                       class="action-btn"
+                                       title="Sửa dịch vụ">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
 
-                                <form action="{{ route('admin.services.destroy', $sv->service_id) }}"
-                                      method="POST"
-                                      class="d-inline">
-                                    @csrf
-                                    @method('DELETE')
+                                    <form action="{{ route('admin.services.destroy', $sv->service_id) }}"
+                                          method="POST"
+                                          onsubmit="return confirm('Bạn chắc chắn muốn xóa dịch vụ này?')">
+                                        @csrf
+                                        @method('DELETE')
 
-                                    <button class="action-btn"
-                                            title="Xóa"
-                                            onclick="return confirm('Bạn chắc chắn muốn xóa?')">
-                                        <i class="bi bi-trash-fill"></i>
-                                    </button>
-                                </form>
+                                        <button type="submit" class="action-btn delete-btn" title="Xóa dịch vụ">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center text-muted py-5">
-                                Chưa có dịch vụ nào.
+                            <td colspan="5" class="text-center text-muted py-5">
+                                Chưa có dịch vụ nào trong danh mục này.
                             </td>
                         </tr>
                     @endforelse
@@ -161,35 +173,10 @@
             </table>
         </div>
 
-        <div class="px-4 py-3 text-muted" style="font-size:13px;">
-            Hiển thị {{ $services->count() }} / {{ $totalServices }} dịch vụ
+        <div class="footer-note">
+            Tổng dịch vụ: {{ $totalServices }} | Đang kinh doanh: {{ $activeServices }}
         </div>
-    </div>
-
-    <div class="insight">
-        <div class="insight-title">Service Insight</div>
-
-        <div class="insight-box">
-            <div class="svc-label">Tổng dịch vụ</div>
-            <div class="insight-num">{{ $totalServices }}</div>
-        </div>
-
-        <div class="insight-box">
-            <div class="svc-label">Đang hoạt động</div>
-            <div class="insight-num">{{ $activeServices }}</div>
-        </div>
-
-        <div class="insight-box">
-            <div class="svc-label">Dịch vụ nổi bật</div>
-            <div class="fw-bold" style="color:#7b5554;">
-                {{ $mostBookedService->service_name ?? 'Chưa có' }}
-            </div>
-            <div class="text-muted" style="font-size:13px;">
-                {{ $mostBookedService->booking_details_count ?? 0 }} lượt đặt
-            </div>
-        </div>
-
-    </div>
+    </section>
 
 </div>
 

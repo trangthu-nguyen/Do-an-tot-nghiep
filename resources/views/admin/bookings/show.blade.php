@@ -377,15 +377,20 @@ $staffAvatar = $booking->staff
                 <div class="modal-body">
                     <label class="form-label fw-bold">Chọn nhân viên</label>
 
-                    <select name="staff_id" class="form-select" required>
-                        <option value="">-- Chọn nhân viên --</option>
-                        @foreach($staffs as $staff)
-                            <option value="{{ $staff->staff_id }}"
-                                {{ $booking->staff_id == $staff->staff_id ? 'selected' : '' }}>
-                                {{ $staff->full_name }} - {{ $staff->skill ?? 'Nhân viên' }}
-                            </option>
-                        @endforeach
-                    </select>
+                    <select name="staff_id" class="form-select">
+    <option value="">-- Chọn nhân viên phù hợp --</option>
+
+    @forelse($staffs as $staff)
+        <option value="{{ $staff->staff_id }}"
+            {{ $booking->staff_id == $staff->staff_id ? 'selected' : '' }}>
+            {{ $staff->full_name }} - {{ $staff->skill ?? 'Chuyên viên' }}
+        </option>
+    @empty
+        <option value="" disabled>
+            Không có nhân viên nào đăng ký lịch phù hợp
+        </option>
+    @endforelse
+</select>
                 </div>
 
                 <div class="modal-footer border-0">

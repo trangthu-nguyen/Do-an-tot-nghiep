@@ -55,6 +55,14 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         Route::resource('/categories', CategoryController::class);
         Route::resource('/services', ServiceController::class);
+
+        // STAFF + LỊCH LÀM VIỆC NHÂN VIÊN
+        Route::post('/staffs/schedules/approve-all', [StaffController::class, 'approveAllSchedules'])
+            ->name('staffs.schedules.approveAll');
+
+        Route::post('/staffs/schedules/{id}/approve', [StaffController::class, 'approveSchedule'])
+            ->name('staffs.schedules.approve');
+
         Route::resource('/staffs', StaffController::class);
 
         Route::get('/customers', [CustomerController::class, 'index'])->name('customers.index');
@@ -73,12 +81,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::delete('/feedbacks/{id}', [AdminFeedbackController::class, 'destroy'])->name('feedbacks.destroy');
 
         Route::get('/notifications', [AdminNotificationController::class, 'index'])->name('notifications.index');
-        Route::post('/notifications/{id}/read', [AdminNotificationController::class, 'markAsRead'])->name('notifications.read');
-    
-
         Route::post('/notifications/read-all', [AdminNotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
-
-       
+        Route::post('/notifications/{id}/read', [AdminNotificationController::class, 'markAsRead'])->name('notifications.read');
     });
 });
 

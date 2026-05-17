@@ -184,34 +184,47 @@ class BookingController extends Controller
     }
 
     public function storeSchedule(Request $request)
-    {
-        $request->validate([
-            'work_date'  => 'required|date',
-            'shift_name' => 'required',
-            'start_time' => 'required',
-            'end_time'   => 'required',
-        ]);
+{
+    $request->validate([
+        'work_date'  => 'required|date',
+        'shift_name' => 'required',
+        'start_time' => 'required',
+        'end_time'   => 'required',
+    ]);
 
-        StaffSchedule::updateOrCreate(
-            [
-                'staff_id'   => session('staff_id'),
-                'work_date'  => $request->work_date,
-            ],
-            [
-                'shift_name' => $request->shift_name,
-                'start_time' => $request->start_time,
-                'end_time'   => $request->end_time,
-                'status'     => 'available',
-                'note'       => $request->note,
-                'updated_at' => now()
-            ]
-        );
+    $staff = Staff::find(session('staff_id'));
 
-        return redirect()
-            ->back()
-            ->with('success', 'Đăng ký lịch làm thành công!');
-    }
+    StaffSchedule::updateOrCreate(
+        [
+            'staff_id'   => session('staff_id'),
+            'work_date'  => $request->work_date,
+            'shift_name' => $request->shift_name,
+        ],
+        [
+            'start_time' => $request->start_time,
+            'end_time'   => $request->end_time,
+            'status'     => 'available',
+            'note'       => $request->note,
+            'updated_at' => now()
+        ]
+    );
 
+    Notification::create([
+        'user_type'  => 'admin',
+        'user_id'    => 1,
+        'title'      => 'Nhân viên đăng ký lịch làm',
+        'content'    => ($staff->full_name ?? 'Nhân viên') .
+                        ' đã đăng ký ' . $request->shift_name .
+                        ' ngày ' . \Carbon\Carbon::parse($request->work_date)->format('d/m/Y') .
+                        ' (' . $request->start_time . ' - ' . $request->end_time . ').',
+        'is_read'    => 0,
+        'created_at' => now()
+    ]);
+
+    return redirect()
+        ->back()
+        ->with('success', 'Đăng ký ca làm thành công!');
+}
     public function markBusy(Request $request)
     {
         $request->validate([
