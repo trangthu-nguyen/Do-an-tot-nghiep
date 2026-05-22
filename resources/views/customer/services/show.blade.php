@@ -88,25 +88,66 @@
         display: flex;
         gap: 12px;
         overflow-x: auto;
-        padding: 12px 0;
+        overflow-y: hidden;
+        padding: 12px 4px 16px;
+        scroll-behavior: smooth;
+        white-space: nowrap;
+    }
+
+    .date-picker::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .date-picker::-webkit-scrollbar-track {
+        background: #f6eeee;
+        border-radius: 999px;
+    }
+
+    .date-picker::-webkit-scrollbar-thumb {
+        background: #d9b5b5;
+        border-radius: 999px;
     }
 
     .date-item {
-        min-width: 82px;
+        min-width: 86px;
         text-align: center;
         padding: 14px 10px;
         cursor: pointer;
         font-weight: 700;
+        border: 1px solid #eadede;
+        border-radius: 18px;
+        background: #fff;
+        color: #7b5554;
+        flex: 0 0 auto;
+        transition: 0.25s;
+    }
+
+    .date-item:hover {
+        background: #fff7f7;
+        transform: translateY(-2px);
+    }
+
+    .date-item.active {
+        background: #7b5554;
+        color: #fff;
+        border-color: #7b5554;
+        box-shadow: 0 8px 20px rgba(123,85,84,0.18);
     }
 
     .date-item .dow {
         font-size: 12px;
-        opacity: 0.7;
+        opacity: 0.8;
     }
 
     .date-item .date {
         font-size: 18px;
         font-weight: 800;
+    }
+
+    .date-item .month {
+        font-size: 11px;
+        opacity: 0.75;
+        margin-top: 2px;
     }
 
     .time-slot-grid {
@@ -126,6 +167,21 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        border: 1px solid #eadede;
+        border-radius: 16px;
+        background: white;
+        color: #7b5554;
+        transition: 0.25s;
+    }
+
+    .time-slot:hover {
+        background: #fff7f7;
+    }
+
+    .time-slot.active {
+        background: #7b5554;
+        color: white;
+        border-color: #7b5554;
     }
 
     .payment-card {
@@ -187,18 +243,14 @@
             </div>
 
             @if(session('customer_id'))
-
                 <button onclick="startBooking()" class="btn-booking w-100 py-3">
                     Đặt lịch ngay
                 </button>
-
             @else
-
                 <a href="{{ route('customer.login') }}"
                    class="btn-booking w-100 py-3 text-center text-decoration-none d-block">
                     Đăng nhập để đặt lịch
                 </a>
-
             @endif
         </div>
     </div>
@@ -206,7 +258,6 @@
 
 @if(session('customer_id'))
 
-<!-- Popup chính -->
 <div class="modal fade" id="bookingModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -220,7 +271,6 @@
     </div>
 </div>
 
-<!-- Popup Thanh toán trực tuyến -->
 <div class="modal fade" id="onlinePaymentModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius: 26px;">
@@ -263,6 +313,8 @@
 
     function startBooking() {
         currentStep = 1;
+        selectedDate = '';
+        selectedTime = '';
         showStep();
         new bootstrap.Modal(document.getElementById('bookingModal')).show();
     }
@@ -280,6 +332,9 @@
 
                 <h6 class="mb-3">Chọn ngày</h6>
                 <div class="date-picker" id="datePicker"></div>
+                <div class="text-muted small mt-1">
+                    Có thể kéo ngang để xem thêm các ngày tiếp theo.
+                </div>
 
                 <h6 class="mb-4 mt-4">Chọn khung giờ</h6>
                 <div class="time-slot-grid" id="timeSlots"></div>
@@ -353,7 +408,7 @@
                         </div>
 
                         <div class="col-md-6">
-                            <div class="payment-card ${paymentMethod === 'online' ? 'active' : ''}" onclick="selectPayment('online')">
+                            <div class="payment-card ${paymentMethod === 'online' || paymentMethod === 'momo' || paymentMethod === 'vnpay' || paymentMethod === 'bank' ? 'active' : ''}" onclick="selectPayment('online')">
                                 <div class="fw-bold" style="font-size:16px;">
                                     Thanh toán trực tuyến
                                 </div>
@@ -379,18 +434,18 @@
     }
 
     function selectPayment(method) {
-    paymentMethod = method;
+        paymentMethod = method;
 
-    if (method === 'cod') {
-        showStep(); // chỉ chọn phương thức, không submit ngay
-        return;
-    }
+        if (method === 'cod') {
+            showStep();
+            return;
+        }
 
-    if (method === 'online') {
-        bootstrap.Modal.getInstance(document.getElementById('bookingModal')).hide();
-        new bootstrap.Modal(document.getElementById('onlinePaymentModal')).show();
+        if (method === 'online') {
+            bootstrap.Modal.getInstance(document.getElementById('bookingModal')).hide();
+            new bootstrap.Modal(document.getElementById('onlinePaymentModal')).show();
+        }
     }
-}
 
     function selectOnlineMethod(el) {
         document.querySelectorAll('#onlinePaymentModal .payment-card').forEach(e => e.classList.remove('active'));
@@ -443,58 +498,52 @@
         showStep();
     }
 
-    function submitBooking()
-{
-    // THANH TOÁN ONLINE
-    if (
-        paymentMethod === 'momo' ||
-        paymentMethod === 'vnpay' ||
-        paymentMethod === 'bank'
-    ) {
+    function submitBooking() {
+        if (
+            paymentMethod === 'momo' ||
+            paymentMethod === 'vnpay' ||
+            paymentMethod === 'bank'
+        ) {
+            const form = document.createElement('form');
+
+            form.method = 'POST';
+            form.action = "{{ route('payment.init') }}";
+
+            form.innerHTML = `
+                @csrf
+                <input type="hidden" name="service_id" value="{{ $service->service_id }}">
+                <input type="hidden" name="booking_date" value="${selectedDate}">
+                <input type="hidden" name="booking_time" value="${selectedTime}">
+                <input type="hidden" name="address" value="${custAddress}">
+                <input type="hidden" name="customer_name" value="${custName}">
+                <input type="hidden" name="customer_phone" value="${custPhone}">
+                <input type="hidden" name="payment_method" value="${paymentMethod}">
+            `;
+
+            document.body.appendChild(form);
+            form.submit();
+            return;
+        }
+
         const form = document.createElement('form');
 
         form.method = 'POST';
-        form.action = "{{ route('payment.init') }}";
+        form.action = "{{ route('customer.bookings.store') }}";
 
         form.innerHTML = `
             @csrf
-
             <input type="hidden" name="service_id" value="{{ $service->service_id }}">
             <input type="hidden" name="booking_date" value="${selectedDate}">
             <input type="hidden" name="booking_time" value="${selectedTime}">
             <input type="hidden" name="address" value="${custAddress}">
             <input type="hidden" name="customer_name" value="${custName}">
             <input type="hidden" name="customer_phone" value="${custPhone}">
-            <input type="hidden" name="payment_method" value="${paymentMethod}">
+            <input type="hidden" name="payment_method" value="cod">
         `;
 
         document.body.appendChild(form);
         form.submit();
-
-        return;
     }
-
-    // THANH TOÁN KHI HOÀN THÀNH
-    const form = document.createElement('form');
-
-    form.method = 'POST';
-    form.action = "{{ route('customer.bookings.store') }}";
-
-    form.innerHTML = `
-        @csrf
-
-        <input type="hidden" name="service_id" value="{{ $service->service_id }}">
-        <input type="hidden" name="booking_date" value="${selectedDate}">
-        <input type="hidden" name="booking_time" value="${selectedTime}">
-        <input type="hidden" name="address" value="${custAddress}">
-        <input type="hidden" name="customer_name" value="${custName}">
-        <input type="hidden" name="customer_phone" value="${custPhone}">
-        <input type="hidden" name="payment_method" value="cod">
-    `;
-
-    document.body.appendChild(form);
-    form.submit();
-}
 
     function generateDatePicker() {
         const container = document.getElementById('datePicker');
@@ -503,7 +552,7 @@
         const today = new Date();
         const dayNames = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 
-        for (let i = 0; i < 7; i++) {
+        for (let i = 0; i < 60; i++) {
             let d = new Date(today);
             d.setDate(today.getDate() + i);
 
@@ -513,48 +562,110 @@
 
             let div = document.createElement('div');
             div.className = 'date-item';
-            div.innerHTML = `<div class="dow">${dayNames[d.getDay()]}</div><div class="date">${d.getDate()}</div>`;
+            div.innerHTML = `
+                <div class="dow">${dayNames[d.getDay()]}</div>
+                <div class="date">${String(d.getDate()).padStart(2, '0')}</div>
+                <div class="month">Tháng ${d.getMonth() + 1}</div>
+            `;
 
             div.onclick = () => {
-                document.querySelectorAll('.date-item').forEach(el => el.classList.remove('active'));
 
-                div.classList.add('active');
+    document.querySelectorAll('.date-item')
+        .forEach(el => el.classList.remove('active'));
 
-                document.getElementById('hidden_date').value = dateStr;
-                selectedDate = dateStr;
+    div.classList.add('active');
 
-                checkReady();
-            };
+    document.getElementById('hidden_date').value = dateStr;
+
+    selectedDate = dateStr;
+
+    // reset giờ khi đổi ngày
+    selectedTime = '';
+    document.getElementById('hidden_time').value = '';
+
+    // render lại khung giờ
+    generateTimeSlots();
+
+    checkReady();
+};
 
             container.appendChild(div);
         }
     }
 
     function generateTimeSlots() {
-        const container = document.getElementById('timeSlots');
-        container.innerHTML = '';
+    const container = document.getElementById('timeSlots');
+    container.innerHTML = '';
 
-        const slots = ["08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "18:00", "19:00"];
+    const slots = [
+        "08:00", "09:00", "10:00", "11:00",
+        "13:00", "14:00", "15:00", "16:00",
+        "18:00", "19:00"
+    ];
 
-        slots.forEach(time => {
-            let div = document.createElement('div');
-            div.className = 'time-slot';
-            div.textContent = time;
+    const now = new Date();
+
+    slots.forEach(time => {
+
+        let div = document.createElement('div');
+        div.className = 'time-slot';
+        div.textContent = time;
+
+        // kiểm tra nếu chọn ngày hôm nay
+        let isPast = false;
+
+        if (selectedDate) {
+
+            const selected = new Date(selectedDate);
+
+            const todayStr = now.toISOString().split('T')[0];
+            const selectedStr = selected.toISOString().split('T')[0];
+
+            // nếu là hôm nay thì kiểm tra giờ đã qua chưa
+            if (selectedStr === todayStr) {
+
+                const [hour, minute] = time.split(':');
+
+                const slotTime = new Date();
+
+                slotTime.setHours(parseInt(hour));
+                slotTime.setMinutes(parseInt(minute));
+                slotTime.setSeconds(0);
+
+                if (slotTime <= now) {
+                    isPast = true;
+                }
+            }
+        }
+
+        // khung giờ đã qua
+        if (isPast) {
+
+            div.style.opacity = '0.4';
+            div.style.cursor = 'not-allowed';
+            div.style.background = '#f1f1f1';
+            div.style.color = '#999';
+
+        } else {
 
             div.onclick = () => {
-                document.querySelectorAll('.time-slot').forEach(el => el.classList.remove('active'));
+
+                document.querySelectorAll('.time-slot')
+                    .forEach(el => el.classList.remove('active'));
 
                 div.classList.add('active');
 
                 document.getElementById('hidden_time').value = time;
+
                 selectedTime = time;
 
                 checkReady();
             };
+        }
 
-            container.appendChild(div);
-        });
-    }
+        container.appendChild(div);
+    });
+}
 
     function checkReady() {
         const date = document.getElementById('hidden_date').value;
