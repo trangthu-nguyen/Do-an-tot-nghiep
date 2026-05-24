@@ -39,7 +39,8 @@ Route::get('/', function () {
 
 
 // ================== PAYMENT INIT ONLINE ==================
-Route::post('/payment/init', [CustomerPaymentController::class, 'init'])->name('payment.init');
+Route::post('/payment/init', [CustomerPaymentController::class, 'init'])
+    ->name('payment.init');
 
 
 // ================== ADMIN ROUTES ==================
@@ -56,7 +57,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::resource('/categories', CategoryController::class);
         Route::resource('/services', ServiceController::class);
 
-        // STAFF + LỊCH LÀM VIỆC NHÂN VIÊN
         Route::post('/staffs/schedules/approve-all', [StaffController::class, 'approveAllSchedules'])
             ->name('staffs.schedules.approveAll');
 
@@ -90,7 +90,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
 // ================== CUSTOMER ROUTES ==================
 Route::prefix('customer')->name('customer.')->group(function () {
 
-    // PUBLIC
     Route::get('/home', [HomeController::class, 'index'])->name('home');
 
     Route::get('/services', [CustomerServiceController::class, 'index'])->name('services.index');
@@ -106,8 +105,6 @@ Route::prefix('customer')->name('customer.')->group(function () {
 
     Route::post('/logout', [CustomerAuthController::class, 'logout'])->name('logout');
 
-
-    // PRIVATE
     Route::middleware(['customer_auth'])->group(function () {
 
         Route::get('/profile', [CustomerProfileController::class, 'index'])->name('profile.index');
@@ -122,10 +119,10 @@ Route::prefix('customer')->name('customer.')->group(function () {
         Route::get('/bookings/create/{service_id}', [CustomerBookingController::class, 'create'])->name('bookings.create');
         Route::post('/bookings/store', [CustomerBookingController::class, 'store'])->name('bookings.store');
         Route::post('/bookings/{id}/cancel', [CustomerBookingController::class, 'cancel'])->name('bookings.cancel');
-
         Route::get('/bookings/available-slots', [CustomerBookingController::class, 'availableSlots'])->name('bookings.availableSlots');
 
         Route::get('/payments', [CustomerPaymentController::class, 'index'])->name('payments.index');
+        Route::get('/payments/wait/{booking_id}', [CustomerPaymentController::class, 'wait'])->name('payments.wait');
         Route::get('/payments/{booking_id}', [CustomerPaymentController::class, 'show'])->name('payments.show');
         Route::post('/payments/{booking_id}/pay', [CustomerPaymentController::class, 'pay'])->name('payments.pay');
 

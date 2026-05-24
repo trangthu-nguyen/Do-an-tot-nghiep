@@ -153,6 +153,19 @@
         font-weight:900;
     }
 
+    .booking-id-badge{
+        position:absolute;
+        left:14px;
+        top:14px;
+        background:rgba(255,255,255,0.94);
+        color:var(--primary);
+        padding:7px 12px;
+        border-radius:999px;
+        font-size:12px;
+        font-weight:900;
+        box-shadow:0 8px 20px rgba(123,85,84,0.12);
+    }
+
     .job-body{
         padding:20px;
         flex:1;
@@ -345,6 +358,10 @@
                          class="job-image"
                          alt="{{ $serviceNames }}">
 
+                    <div class="booking-id-badge">
+                        Booking #{{ $booking->booking_id }}
+                    </div>
+
                     <div class="price-badge">
                         {{ number_format($booking->total_amount) }}đ
                     </div>
@@ -366,6 +383,13 @@
                     </div>
 
                     <div class="info-list">
+
+                        <div class="info-item">
+                            <i class="bi bi-hash"></i>
+                            <span>
+                                Mã booking: #{{ $booking->booking_id }}
+                            </span>
+                        </div>
 
                         <div class="info-item">
                             <i class="bi bi-calendar-event"></i>
