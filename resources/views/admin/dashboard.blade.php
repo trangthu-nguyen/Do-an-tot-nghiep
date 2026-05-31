@@ -192,31 +192,31 @@
     </div>
 
     <div class="col-md-6 col-xl-3">
-        <div class="stat-card">
-            <div class="stat-icon"><i class="bi bi-calendar-heart"></i></div>
-            <div class="stat-label">Lịch hẹn</div>
-            <div class="stat-value">{{ $totalBookings ?? 0 }}</div>
-            <div class="stat-up">Đang quản lý</div>
-        </div>
+    <div class="stat-card">
+        <div class="stat-icon"><i class="bi bi-calendar-heart"></i></div>
+        <div class="stat-label">Lịch chờ xác nhận</div>
+        <div class="stat-value">{{ $pendingBookingCount ?? 0 }}</div>
+        <div class="stat-up">Cần xử lý</div>
     </div>
+</div>
 
-    <div class="col-md-6 col-xl-3">
-        <div class="stat-card">
-            <div class="stat-icon"><i class="bi bi-person-check"></i></div>
-            <div class="stat-label">Nhân viên</div>
-            <div class="stat-value">{{ $totalStaff ?? 0 }}</div>
-            <div class="stat-up">Đang hoạt động</div>
-        </div>
+<div class="col-md-6 col-xl-3">
+    <div class="stat-card">
+        <div class="stat-icon"><i class="bi bi-credit-card"></i></div>
+        <div class="stat-label">Thanh toán chờ xác nhận</div>
+        <div class="stat-value">{{ $pendingPaymentCount ?? 0 }}</div>
+        <div class="stat-up">Giao dịch pending</div>
     </div>
+</div>
 
-    <div class="col-md-6 col-xl-3">
-        <div class="stat-card">
-            <div class="stat-icon"><i class="bi bi-star"></i></div>
-            <div class="stat-label">Đánh giá</div>
-            <div class="stat-value">5.0</div>
-            <div class="stat-up">{{ $totalServices ?? 0 }} dịch vụ</div>
-        </div>
+<div class="col-md-6 col-xl-3">
+    <div class="stat-card">
+        <div class="stat-icon"><i class="bi bi-cash-coin"></i></div>
+        <div class="stat-label">Doanh thu tháng này</div>
+        <div class="stat-value">{{ number_format($monthRevenue ?? 0, 0, ',', '.') }}đ</div>
+        <div class="stat-up">Đã thanh toán</div>
     </div>
+</div>
 </div>
 
 <div class="row g-4">
@@ -342,11 +342,28 @@
                     <td>{{ $serviceName }}</td>
 
                     <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <img src="{{ $staffImage }}" class="staff-mini-avatar" alt="Ảnh nhân viên">
-                            <span>{{ $b->staff->full_name ?? 'Chưa phân công' }}</span>
-                        </div>
-                    </td>
+
+    @if($b->staff)
+
+        <div class="d-flex align-items-center gap-2">
+
+            <img src="{{ $staffImage }}"
+                 class="staff-mini-avatar"
+                 alt="Ảnh nhân viên">
+
+            <span>{{ $b->staff->full_name }}</span>
+
+        </div>
+
+    @else
+
+        <span class="text-muted">
+            Chưa phân công
+        </span>
+
+    @endif
+
+</td>
 
                     <td>
                         {{ $b->booking_date ?? '---' }}

@@ -20,23 +20,140 @@
             --radius:16px;
         }
 
-        body{font-family:'Manrope',system-ui,sans-serif;background:var(--bg);color:var(--text)}
-        h1,h2,h3,h4,h5{font-family:'Noto Serif',serif}
+        html, body {
+            min-height: 100%;
+        }
 
-        .sidebar{width:260px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-right:1px solid #e9e8e8;min-height:100vh;padding:24px 16px}
-        .sidebar-logo{font-family:'Noto Serif',serif;font-size:24px;font-weight:700;color:var(--primary);text-align:center;margin-bottom:40px}
-        .sidebar-menu a{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:14px;color:var(--muted);text-decoration:none;font-weight:500;margin-bottom:6px;transition:.25s}
-        .sidebar-menu a:hover{background:rgba(235,186,185,.18);color:var(--primary)}
-        .sidebar-menu a.active{background:var(--primary);color:white}
+        body {
+            font-family:'Manrope',system-ui,sans-serif;
+            background:var(--bg);
+            color:var(--text);
+            margin: 0;
+        }
 
-        .content-area{flex:1;padding:30px}
-        .admin-header{background:rgba(255,255,255,.9);backdrop-filter:blur(10px);border-radius:var(--radius);padding:18px 24px;box-shadow:0 6px 18px rgba(123,85,84,.10);margin-bottom:30px;border:1px solid rgba(212,194,194,.6)}
-        .btn-primary-ui{background:var(--primary);color:white;border-radius:14px;padding:10px 16px;font-weight:600;border:none;text-decoration:none;transition:.2s}
-        .btn-primary-ui:hover{background:#6d4848;color:white}
-        .card-ui{background:rgba(255,255,255,.9);backdrop-filter:blur(12px);border-radius:var(--radius);padding:20px;border:1px solid rgba(212,194,194,.6);box-shadow:0 10px 30px rgba(123,85,84,.08)}
-        table thead{background:rgba(235,186,185,.25)}
-        table thead th{color:var(--muted);font-weight:700;font-size:14px}
-        table tbody td{font-size:14px}
+        h1,h2,h3,h4,h5 {
+            font-family:'Noto Serif',serif;
+        }
+
+        .admin-wrapper {
+            display: flex;
+            min-height: 100vh;
+            align-items: flex-start;
+        }
+
+        .sidebar {
+            width:260px;
+            background:rgba(255,255,255,.92);
+            backdrop-filter:blur(12px);
+            border-right:1px solid #e9e8e8;
+            height:100vh;
+            padding:24px 16px;
+            position: sticky;
+            top: 0;
+            overflow-y: auto;
+            flex-shrink: 0;
+            z-index: 100;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: #eadede;
+            border-radius: 999px;
+        }
+
+        .sidebar-logo {
+            font-family:'Noto Serif',serif;
+            font-size:24px;
+            font-weight:700;
+            color:var(--primary);
+            text-align:center;
+            margin-bottom:40px;
+        }
+
+        .sidebar-menu a {
+            display:flex;
+            align-items:center;
+            gap:12px;
+            padding:14px 16px;
+            border-radius:14px;
+            color:var(--muted);
+            text-decoration:none;
+            font-weight:500;
+            margin-bottom:6px;
+            transition:.25s;
+        }
+
+        .sidebar-menu a:hover {
+            background:rgba(235,186,185,.18);
+            color:var(--primary);
+        }
+
+        .sidebar-menu a.active {
+            background:var(--primary);
+            color:white;
+        }
+
+        .content-area {
+            flex:1;
+            padding:30px;
+            min-width: 0;
+        }
+
+        .admin-header {
+            background:rgba(255,255,255,.9);
+            backdrop-filter:blur(10px);
+            border-radius:var(--radius);
+            padding:18px 24px;
+            box-shadow:0 6px 18px rgba(123,85,84,.10);
+            margin-bottom:30px;
+            border:1px solid rgba(212,194,194,.6);
+        }
+
+        .btn-primary-ui {
+            background:var(--primary);
+            color:white;
+            border-radius:14px;
+            padding:10px 16px;
+            font-weight:600;
+            border:none;
+            text-decoration:none;
+            transition:.2s;
+        }
+
+        .btn-primary-ui:hover {
+            background:#6d4848;
+            color:white;
+        }
+
+        .card-ui {
+            background:rgba(255,255,255,.9);
+            backdrop-filter:blur(12px);
+            border-radius:var(--radius);
+            padding:20px;
+            border:1px solid rgba(212,194,194,.6);
+            box-shadow:0 10px 30px rgba(123,85,84,.08);
+        }
+
+        table thead {
+            background:rgba(235,186,185,.25);
+        }
+
+        table thead th {
+            color:var(--muted);
+            font-weight:700;
+            font-size:14px;
+        }
+
+        table tbody td {
+            font-size:14px;
+        }
 
         .admin-bell{
             width:44px;
@@ -54,7 +171,9 @@
             overflow:visible;
         }
 
-        .admin-bell i{font-size:19px}
+        .admin-bell i {
+            font-size:19px;
+        }
 
         .admin-bell-badge{
             position:absolute;
@@ -75,6 +194,25 @@
             line-height:1;
             z-index:99;
         }
+
+        @media (max-width: 992px) {
+            .admin-wrapper {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                position: relative;
+                top: auto;
+                width: 100%;
+                height: auto;
+                min-height: auto;
+            }
+
+            .content-area {
+                padding: 18px;
+                width: 100%;
+            }
+        }
     </style>
 
     @yield('css')
@@ -88,7 +226,7 @@
         ->count();
 @endphp
 
-<div class="d-flex">
+<div class="admin-wrapper">
 
     <aside class="sidebar">
         <div class="sidebar-logo">BeautyHome</div>
@@ -98,12 +236,10 @@
                 <i class="bi bi-house-door"></i> Dashboard
             </a>
 
-            
-
             <a href="{{ route('admin.services.index') }}"
-   class="{{ request()->routeIs('admin.services.*') || request()->routeIs('admin.categories.*') ? 'active' : '' }}">
-    <i class="bi bi-box-seam"></i> Dịch vụ
-</a>
+               class="{{ request()->routeIs('admin.services.*') || request()->routeIs('admin.categories.*') ? 'active' : '' }}">
+                <i class="bi bi-box-seam"></i> Dịch vụ
+            </a>
 
             <a href="{{ route('admin.bookings.index') }}" class="{{ request()->routeIs('admin.bookings.*') ? 'active' : '' }}">
                 <i class="bi bi-calendar-check"></i> Lịch đặt
@@ -120,12 +256,10 @@
             <a href="{{ route('admin.payments.index') }}" class="{{ request()->routeIs('admin.payments.*') ? 'active' : '' }}">
                 <i class="bi bi-credit-card"></i> Thanh toán
             </a>
-            
+
             <a href="{{ route('admin.feedbacks.index') }}" class="{{ request()->routeIs('admin.feedbacks.*') ? 'active' : '' }}">
                 <i class="bi bi-star"></i> Đánh giá
             </a>
-
-            
 
             <hr>
 
@@ -139,7 +273,7 @@
         </div>
     </aside>
 
-    <main class="content-area flex-grow-1">
+    <main class="content-area">
         <div class="admin-header d-flex justify-content-between align-items-center">
             <h4 class="mb-0 fw-bold" style="color:var(--primary);">
                 @yield('title', 'Dashboard')

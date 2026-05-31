@@ -306,9 +306,16 @@
     let currentStep = 1;
     let selectedDate = '';
     let selectedTime = '';
+
     let custName = "{{ session('customer_name') ?? '' }}";
     let custPhone = "{{ session('customer_phone') ?? '' }}";
     let custAddress = "";
+
+    let selectedDistrictCode = "";
+    let selectedDistrictName = "";
+    let selectedWardName = "";
+    let addressDetail = "";
+
     let paymentMethod = "cod";
 
     function startBooking() {
@@ -355,11 +362,45 @@
             body.innerHTML = `
                 <h6 class="mb-3">Thông tin người đặt</h6>
 
-                <input type="text" id="cust_name" class="form-control mb-3" value="${custName}" placeholder="Họ và tên">
+                <input type="text"
+                       id="cust_name"
+                       class="form-control mb-3"
+                       value="${custName}"
+                       placeholder="Họ và tên">
 
-                <input type="tel" id="cust_phone" class="form-control mb-3" value="${custPhone}" placeholder="Số điện thoại">
+                <input type="tel"
+                       id="cust_phone"
+                       class="form-control mb-3"
+                       value="${custPhone}"
+                       placeholder="Số điện thoại">
 
-                <textarea id="cust_address" class="form-control mb-4" rows="3" placeholder="Địa chỉ nhận dịch vụ">${custAddress}</textarea>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Tỉnh/Thành phố</label>
+                    <input type="text" class="form-control" value="Hà Nội" readonly>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Quận/Huyện</label>
+                    <select id="district" class="form-control" onchange="loadWardsByDistrict()">
+                        <option value="">-- Chọn quận/huyện --</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Phường/Xã</label>
+                    <select id="ward" class="form-control">
+                        <option value="">-- Chọn phường/xã --</option>
+                    </select>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Số nhà / Đường / Ngõ</label>
+                    <input type="text"
+                           id="address_detail"
+                           class="form-control"
+                           value="${addressDetail}"
+                           placeholder="VD: Số 12, ngõ 18 Nguyễn Phúc Lai">
+                </div>
 
                 <div class="d-flex gap-3">
                     <button onclick="prevStep()" class="btn btn-secondary flex-fill">
@@ -371,6 +412,8 @@
                     </button>
                 </div>
             `;
+
+            loadHanoiDistricts();
         }
 
         if (currentStep === 3) {
@@ -476,11 +519,21 @@
         if (currentStep === 2) {
             custName = document.getElementById('cust_name').value;
             custPhone = document.getElementById('cust_phone').value;
-            custAddress = document.getElementById('cust_address').value;
 
-            if (!custName || !custPhone || !custAddress) {
+            const districtSelect = document.getElementById('district');
+            const wardSelect = document.getElementById('ward');
+            const addressInput = document.getElementById('address_detail');
+
+            selectedDistrictCode = districtSelect.value;
+            selectedDistrictName = districtSelect.options[districtSelect.selectedIndex]?.text || '';
+            selectedWardName = wardSelect.value;
+            addressDetail = addressInput.value.trim();
+
+            if (!custName || !custPhone || !selectedDistrictCode || !selectedWardName || !addressDetail) {
                 return alert("Vui lòng nhập đầy đủ họ tên, số điện thoại và địa chỉ!");
             }
+
+            custAddress = `${addressDetail}, ${selectedWardName}, ${selectedDistrictName}, Hà Nội`;
         }
 
         currentStep++;
@@ -491,7 +544,11 @@
         if (currentStep === 2) {
             custName = document.getElementById('cust_name').value;
             custPhone = document.getElementById('cust_phone').value;
-            custAddress = document.getElementById('cust_address').value;
+
+            const addressInput = document.getElementById('address_detail');
+            if (addressInput) {
+                addressDetail = addressInput.value.trim();
+            }
         }
 
         currentStep--;
@@ -569,103 +626,159 @@
             `;
 
             div.onclick = () => {
+                document.querySelectorAll('.date-item')
+                    .forEach(el => el.classList.remove('active'));
 
-    document.querySelectorAll('.date-item')
-        .forEach(el => el.classList.remove('active'));
+                div.classList.add('active');
 
-    div.classList.add('active');
+                document.getElementById('hidden_date').value = dateStr;
 
-    document.getElementById('hidden_date').value = dateStr;
+                selectedDate = dateStr;
+                selectedTime = '';
+                document.getElementById('hidden_time').value = '';
 
-    selectedDate = dateStr;
-
-    // reset giờ khi đổi ngày
-    selectedTime = '';
-    document.getElementById('hidden_time').value = '';
-
-    // render lại khung giờ
-    generateTimeSlots();
-
-    checkReady();
-};
+                generateTimeSlots();
+                checkReady();
+            };
 
             container.appendChild(div);
         }
     }
 
     function generateTimeSlots() {
-    const container = document.getElementById('timeSlots');
-    container.innerHTML = '';
+        const container = document.getElementById('timeSlots');
+        container.innerHTML = '';
 
-    const slots = [
-        "08:00", "09:00", "10:00", "11:00",
-        "13:00", "14:00", "15:00", "16:00",
-        "18:00", "19:00"
-    ];
+        const slots = [
+            "08:00", "09:00", "10:00", "11:00",
+            "13:00", "14:00", "15:00", "16:00",
+            "18:00", "19:00"
+        ];
 
-    const now = new Date();
+        const now = new Date();
 
-    slots.forEach(time => {
+        slots.forEach(time => {
+            let div = document.createElement('div');
+            div.className = 'time-slot';
+            div.textContent = time;
 
-        let div = document.createElement('div');
-        div.className = 'time-slot';
-        div.textContent = time;
+            let isPast = false;
 
-        // kiểm tra nếu chọn ngày hôm nay
-        let isPast = false;
+            if (selectedDate) {
+                const selected = new Date(selectedDate);
 
-        if (selectedDate) {
+                const todayStr = now.toISOString().split('T')[0];
+                const selectedStr = selected.toISOString().split('T')[0];
 
-            const selected = new Date(selectedDate);
+                if (selectedStr === todayStr) {
+                    const [hour, minute] = time.split(':');
 
-            const todayStr = now.toISOString().split('T')[0];
-            const selectedStr = selected.toISOString().split('T')[0];
+                    const slotTime = new Date();
 
-            // nếu là hôm nay thì kiểm tra giờ đã qua chưa
-            if (selectedStr === todayStr) {
+                    slotTime.setHours(parseInt(hour));
+                    slotTime.setMinutes(parseInt(minute));
+                    slotTime.setSeconds(0);
 
-                const [hour, minute] = time.split(':');
-
-                const slotTime = new Date();
-
-                slotTime.setHours(parseInt(hour));
-                slotTime.setMinutes(parseInt(minute));
-                slotTime.setSeconds(0);
-
-                if (slotTime <= now) {
-                    isPast = true;
+                    if (slotTime <= now) {
+                        isPast = true;
+                    }
                 }
             }
+
+            if (isPast) {
+                div.style.opacity = '0.4';
+                div.style.cursor = 'not-allowed';
+                div.style.background = '#f1f1f1';
+                div.style.color = '#999';
+            } else {
+                div.onclick = () => {
+                    document.querySelectorAll('.time-slot')
+                        .forEach(el => el.classList.remove('active'));
+
+                    div.classList.add('active');
+
+                    document.getElementById('hidden_time').value = time;
+
+                    selectedTime = time;
+
+                    checkReady();
+                };
+            }
+
+            container.appendChild(div);
+        });
+    }
+
+    async function loadHanoiDistricts() {
+        const districtSelect = document.getElementById('district');
+        const wardSelect = document.getElementById('ward');
+
+        if (!districtSelect) return;
+
+        districtSelect.innerHTML = '<option value="">Đang tải quận/huyện...</option>';
+
+        try {
+            const response = await fetch('https://provinces.open-api.vn/api/v1/p/01?depth=2');
+            const data = await response.json();
+
+            districtSelect.innerHTML = '<option value="">-- Chọn quận/huyện --</option>';
+
+            data.districts.forEach(district => {
+                const selected = selectedDistrictCode == district.code ? 'selected' : '';
+
+                districtSelect.innerHTML += `
+                    <option value="${district.code}" ${selected}>
+                        ${district.name}
+                    </option>
+                `;
+            });
+
+            if (selectedDistrictCode) {
+                await loadWardsByDistrict();
+            } else if (wardSelect) {
+                wardSelect.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
+            }
+        } catch (error) {
+            districtSelect.innerHTML = '<option value="">Không tải được dữ liệu</option>';
+            alert('Không tải được danh sách quận/huyện. Vui lòng kiểm tra kết nối mạng.');
+        }
+    }
+
+    async function loadWardsByDistrict() {
+        const districtSelect = document.getElementById('district');
+        const wardSelect = document.getElementById('ward');
+
+        if (!districtSelect || !wardSelect) return;
+
+        const districtCode = districtSelect.value;
+
+        wardSelect.innerHTML = '<option value="">Đang tải phường/xã...</option>';
+
+        if (!districtCode) {
+            wardSelect.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
+            return;
         }
 
-        // khung giờ đã qua
-        if (isPast) {
+        try {
+            const response = await fetch(`https://provinces.open-api.vn/api/v1/d/${districtCode}?depth=2`);
+            const data = await response.json();
 
-            div.style.opacity = '0.4';
-            div.style.cursor = 'not-allowed';
-            div.style.background = '#f1f1f1';
-            div.style.color = '#999';
+            wardSelect.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
 
-        } else {
+            data.wards.forEach(ward => {
+                const selected = selectedWardName == ward.name ? 'selected' : '';
 
-            div.onclick = () => {
-
-                document.querySelectorAll('.time-slot')
-                    .forEach(el => el.classList.remove('active'));
-
-                div.classList.add('active');
-
-                document.getElementById('hidden_time').value = time;
-
-                selectedTime = time;
-
-                checkReady();
-            };
+                wardSelect.innerHTML += `
+                    <option value="${ward.name}" ${selected}>
+                        ${ward.name}
+                    </option>
+                `;
+            });
+        } catch (error) {
+            wardSelect.innerHTML = '<option value="">Không tải được dữ liệu</option>';
+            alert('Không tải được danh sách phường/xã.');
         }
-
-        container.appendChild(div);
-    });
-}
+    }
 
     function checkReady() {
         const date = document.getElementById('hidden_date').value;

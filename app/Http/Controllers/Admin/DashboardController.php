@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
 use App\Models\Booking;
 use App\Models\Service;
 use App\Models\Customer;
@@ -12,18 +13,64 @@ use App\Models\Payment;
 
 class DashboardController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $totalBookings = Booking::count();
         $totalServices = Service::count();
         $totalCustomers = Customer::count();
         $totalStaff = Staff::count();
 
-        // Tổng doanh thu từ các lịch đã hoàn thành
-        $totalRevenue = Payment::where('payment_status', 'paid')
+        $todayRevenue = Payment::where('payment_status', 'paid')
+            ->whereDate('payment_date', today())
             ->sum('amount');
 
-        // Nhân viên có nhiều lịch hẹn nhất
+        $monthRevenue = Payment::where('payment_status', 'paid')
+            ->whereYear('payment_date', now()->year)
+            ->whereMonth('payment_date', now()->month)
+            ->sum('amount');
+
+        $pendingPaymentCount = Payment::where('payment_status', 'pending')->count();
+        $pendingBookingCount = Booking::where('status', 0)->count();
+
+        $totalRevenue = $todayRevenue;
+
+        $revenueFilter = $request->get('revenue_filter', 'month');
+
+        if ($revenueFilter == 'week') {
+            $rawRevenue = Payment::selectRaw('DATE(payment_date) as day, SUM(amount) as total')
+                ->where('payment_status', 'paid')
+                ->whereBetween('payment_date', [now()->startOfWeek(), now()->endOfWeek()])
+                ->groupBy('day')
+                ->orderBy('day')
+                ->pluck('total', 'day')
+                ->toArray();
+
+            $months = [];
+            $revenues = [];
+
+            for ($date = now()->startOfWeek()->copy(); $date <= now()->endOfWeek(); $date->addDay()) {
+                $key = $date->format('Y-m-d');
+                $months[] = $date->format('d/m');
+                $revenues[] = $rawRevenue[$key] ?? 0;
+            }
+        } else {
+            $rawRevenue = Payment::selectRaw('MONTH(payment_date) as month, SUM(amount) as total')
+                ->where('payment_status', 'paid')
+                ->whereYear('payment_date', date('Y'))
+                ->groupBy('month')
+                ->orderBy('month')
+                ->pluck('total', 'month')
+                ->toArray();
+
+            $months = [];
+            $revenues = [];
+
+            for ($i = 1; $i <= 12; $i++) {
+                $months[] = "Tháng $i";
+                $revenues[] = $rawRevenue[$i] ?? 0;
+            }
+        }
+
         $topStaff = Staff::withCount('bookings')
             ->orderByDesc('bookings_count')
             ->first();
@@ -32,26 +79,23 @@ class DashboardController extends Controller
         $topStaffBookings = $topStaff->bookings_count ?? 0;
         $topStaffId = $topStaff->staff_id ?? null;
 
-        // Ảnh nhân viên, khớp với cột image trong bảng staffs
         $femalePortraits = [
-    'https://randomuser.me/api/portraits/women/44.jpg',
-    'https://randomuser.me/api/portraits/women/65.jpg',
-    'https://randomuser.me/api/portraits/women/68.jpg',
-    'https://randomuser.me/api/portraits/women/71.jpg',
-    'https://randomuser.me/api/portraits/women/72.jpg',
-    'https://randomuser.me/api/portraits/women/76.jpg',
-    'https://randomuser.me/api/portraits/women/79.jpg',
-    'https://randomuser.me/api/portraits/women/81.jpg'
-];
+            'https://randomuser.me/api/portraits/women/44.jpg',
+            'https://randomuser.me/api/portraits/women/65.jpg',
+            'https://randomuser.me/api/portraits/women/68.jpg',
+            'https://randomuser.me/api/portraits/women/71.jpg',
+            'https://randomuser.me/api/portraits/women/72.jpg',
+            'https://randomuser.me/api/portraits/women/76.jpg',
+            'https://randomuser.me/api/portraits/women/79.jpg',
+            'https://randomuser.me/api/portraits/women/81.jpg'
+        ];
 
-$topStaffImage = $topStaff
-    ? $femalePortraits[$topStaff->staff_id % count($femalePortraits)]
-    : asset('images/default-avatar.png');
+        $topStaffImage = $topStaff
+            ? $femalePortraits[($topStaff->staff_id - 1) % count($femalePortraits)]
+            : asset('images/default-avatar.png');
 
-        // Đánh giá auto 5 sao theo yêu cầu
         $topStaffRating = '5.0';
         $topStaffStars = '★★★★★';
-
         $totalFeedbacks = Feedback::count();
 
         $recentBookings = Booking::with([
@@ -63,23 +107,6 @@ $topStaffImage = $topStaff
             ->orderBy('booking_id', 'desc')
             ->limit(5)
             ->get();
-
-        // Doanh thu theo tháng trong năm hiện tại
-        $revenueByMonth = Payment::selectRaw('MONTH(payment_date) as month, SUM(amount) as total')
-    ->where('payment_status', 'paid')
-    ->whereYear('payment_date', date('Y'))
-    ->groupBy('month')
-    ->orderBy('month')
-    ->pluck('total', 'month')
-    ->toArray();
-
-        $months = [];
-        $revenues = [];
-
-        for ($i = 1; $i <= 12; $i++) {
-            $months[] = "Tháng $i";
-            $revenues[] = $revenueByMonth[$i] ?? 0;
-        }
 
         $bookingStatus = [
             'Chờ xác nhận' => Booking::where('status', 0)->count(),
@@ -95,6 +122,11 @@ $topStaffImage = $topStaff
             'totalCustomers',
             'totalStaff',
             'totalRevenue',
+            'todayRevenue',
+            'monthRevenue',
+            'pendingPaymentCount',
+            'pendingBookingCount',
+            'revenueFilter',
             'topStaffName',
             'topStaffBookings',
             'topStaffImage',
@@ -105,7 +137,7 @@ $topStaffImage = $topStaff
             'months',
             'revenues',
             'bookingStatus',
-            'topStaffId',
+            'topStaffId'
         ));
     }
 }
