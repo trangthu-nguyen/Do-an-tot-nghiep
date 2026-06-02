@@ -26,7 +26,7 @@
     .small-muted{font-size:12px;color:#8d8181}
     .service-pill{display:inline-block;background:#f4eeee;color:#7b5554;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:800;margin:2px}
     .status{padding:6px 12px;border-radius:999px;font-size:12px;font-weight:900}
-    .s0{background:#fef3c7;color:#b45309}.s1{background:#dcfce7;color:#15803d}.s2{background:#dbeafe;color:#1d4ed8}.s3{background:#e0e7ff;color:#4338ca}.s4{background:#fee2e2;color:#b91c1c}
+    .s0{background:#fef3c7;color:#b45309;}.s1{background:#dbeafe;color:#1d4ed8;}.s2{background:#ede9fe;color:#7c3aed;}.s3{background:#dcfce7;color:#15803d;}.s4{background:#fee2e2;color:#b91c1c;}
     .action-btn{border:0;background:transparent;color:#7b5554;font-size:17px;text-decoration:none}
     .side-box{padding:20px;margin-bottom:18px}
     .staff-row{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f1e7e7;padding:10px 0}
@@ -218,7 +218,7 @@
                     @if($staff->status == 1)
                         <span class="text-success fw-bold" style="font-size:12px;">Hoạt động</span>
                     @else
-                        <span class="text-muted fw-bold" style="font-size:12px;">Bận</span>
+                        <span class="text-danger fw-bold" style="font-size:12px;">Bận</span>
                     @endif
                 </div>
             @empty

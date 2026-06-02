@@ -205,7 +205,7 @@
         <div class="stat-icon"><i class="bi bi-credit-card"></i></div>
         <div class="stat-label">Thanh toán chờ xác nhận</div>
         <div class="stat-value">{{ $pendingPaymentCount ?? 0 }}</div>
-        <div class="stat-up">Giao dịch pending</div>
+        <div class="stat-up">Giao dịch chưa được xử lý</div>
     </div>
 </div>
 

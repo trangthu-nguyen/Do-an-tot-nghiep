@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Payment;
-use App\Models\Booking;
 
 class PaymentController extends Controller
 {
@@ -14,12 +13,33 @@ class PaymentController extends Controller
         $query = Payment::with(['booking.customer'])
             ->orderBy('payment_id', 'desc');
 
+        if ($request->filled('keyword')) {
+            $keyword = $request->keyword;
+
+            $query->where(function ($q) use ($keyword) {
+                $q->where('payment_id', 'like', "%$keyword%")
+                    ->orWhere('booking_id', 'like', "%$keyword%")
+                    ->orWhereHas('booking.customer', function ($cus) use ($keyword) {
+                        $cus->where('full_name', 'like', "%$keyword%")
+                            ->orWhere('phone', 'like', "%$keyword%");
+                    });
+            });
+        }
+
         if ($request->filled('status')) {
             $query->where('payment_status', $request->status);
         }
 
         if ($request->filled('method')) {
             $query->where('payment_method', $request->method);
+        }
+
+        if ($request->filled('from_date')) {
+            $query->whereDate('payment_date', '>=', $request->from_date);
+        }
+
+        if ($request->filled('to_date')) {
+            $query->whereDate('payment_date', '<=', $request->to_date);
         }
 
         $payments = $query->get();
@@ -33,13 +53,20 @@ class PaymentController extends Controller
             ->whereMonth('payment_date', now()->month)
             ->sum('amount');
 
+        $yearRevenue = Payment::where('payment_status', 'paid')
+            ->whereYear('payment_date', now()->year)
+            ->sum('amount');
+
         $pendingAmount = Payment::where('payment_status', 'pending')->sum('amount');
+        $pendingCount = Payment::where('payment_status', 'pending')->count();
 
         return view('admin.payments.index', compact(
             'payments',
             'todayRevenue',
             'monthRevenue',
-            'pendingAmount'
+            'yearRevenue',
+            'pendingAmount',
+            'pendingCount'
         ));
     }
 
