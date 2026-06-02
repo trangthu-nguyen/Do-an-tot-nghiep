@@ -27,7 +27,7 @@
 
     .filter-bar{
         display:grid;
-        grid-template-columns:1fr 1fr 1fr auto;
+        grid-template-columns:1fr 1fr 1fr 1fr auto;
         gap:16px;
         align-items:end;
         margin-bottom:28px;
@@ -281,12 +281,25 @@
         <label>Dịch vụ</label>
         <select class="filter-control" id="serviceFilter">
             <option value="">Tất cả dịch vụ</option>
+            @php
+                $serviceOptions = [];
+            @endphp
+
             @foreach($bookings as $booking)
                 @foreach($booking->bookingDetails as $detail)
                     @if($detail->service)
-                        <option value="{{ strtolower($detail->service->service_name) }}">
-                            {{ $detail->service->service_name }}
-                        </option>
+                        @php
+                            $serviceName = $detail->service->service_name;
+                        @endphp
+
+                        @if(!in_array($serviceName, $serviceOptions))
+                            @php
+                                $serviceOptions[] = $serviceName;
+                            @endphp
+                            <option value="{{ strtolower($serviceName) }}">
+                                {{ $serviceName }}
+                            </option>
+                        @endif
                     @endif
                 @endforeach
             @endforeach
@@ -294,16 +307,36 @@
     </div>
 
     <div class="filter-group">
-        <label>Khu vực</label>
-        <select class="filter-control" id="areaFilter">
+        <label>Quận/Huyện</label>
+        <select class="filter-control" id="districtFilter">
             <option value="">Tất cả quận/huyện</option>
-            <option value="quận 1">Quận 1</option>
-            <option value="quận 2">Quận 2</option>
-            <option value="quận 3">Quận 3</option>
-            <option value="quận 7">Quận 7</option>
-            <option value="bình thạnh">Bình Thạnh</option>
-            <option value="gò vấp">Gò Vấp</option>
-            <option value="thủ đức">Thủ Đức</option>
+            <option value="ba đình">Ba Đình</option>
+            <option value="hoàn kiếm">Hoàn Kiếm</option>
+            <option value="đống đa">Đống Đa</option>
+            <option value="hai bà trưng">Hai Bà Trưng</option>
+            <option value="cầu giấy">Cầu Giấy</option>
+            <option value="thanh xuân">Thanh Xuân</option>
+            <option value="hoàng mai">Hoàng Mai</option>
+            <option value="long biên">Long Biên</option>
+            <option value="hà đông">Hà Đông</option>
+            <option value="nam từ liêm">Nam Từ Liêm</option>
+            <option value="bắc từ liêm">Bắc Từ Liêm</option>
+            <option value="tây hồ">Tây Hồ</option>
+            <option value="sóc sơn">Sóc Sơn</option>
+            <option value="đông anh">Đông Anh</option>
+            <option value="gia lâm">Gia Lâm</option>
+            <option value="thanh trì">Thanh Trì</option>
+            <option value="hoài đức">Hoài Đức</option>
+            <option value="thạch thất">Thạch Thất</option>
+            <option value="quốc oai">Quốc Oai</option>
+            <option value="chương mỹ">Chương Mỹ</option>
+        </select>
+    </div>
+
+    <div class="filter-group">
+        <label>Phường/Xã</label>
+        <select class="filter-control" id="wardFilter">
+            <option value="">Tất cả phường/xã</option>
         </select>
     </div>
 
@@ -350,7 +383,7 @@
 
             <div class="job-card"
                  data-service="{{ strtolower($serviceNames) }}"
-                 data-address="{{ strtolower($booking->address) }}"
+                 data-address="{{ strtolower($booking->address ?? '') }}"
                  data-date="{{ $bookingDate }}">
 
                 <div class="image-wrap">
@@ -367,7 +400,7 @@
                     </div>
 
                     <div class="status-badge">
-                        Mới nhất
+                        Chờ nhận
                     </div>
                 </div>
 
@@ -450,12 +483,56 @@
 
 <script>
     const serviceFilter = document.getElementById('serviceFilter');
-    const areaFilter = document.getElementById('areaFilter');
+    const districtFilter = document.getElementById('districtFilter');
+    const wardFilter = document.getElementById('wardFilter');
     const dateFilter = document.getElementById('dateFilter');
+
+    const hanoiWards = {
+        "ba đình": ["kim mã", "liễu giai", "ngọc hà", "đội cấn", "trúc bạch", "phúc xá", "cống vị"],
+        "hoàn kiếm": ["hàng bài", "tràng tiền", "lý thái tổ", "hàng bạc", "hàng bồ", "cửa nam", "phan chu trinh"],
+        "đống đa": ["láng hạ", "ô chợ dừa", "quang trung", "trung liệt", "cát linh", "văn chương", "khương thượng"],
+        "hai bà trưng": ["bạch mai", "minh khai", "ngô thì nhậm", "bách khoa", "thanh nhàn", "quỳnh mai"],
+        "cầu giấy": ["dịch vọng", "dịch vọng hậu", "trung hòa", "yên hòa", "nghĩa đô", "nghĩa tân", "mai dịch"],
+        "thanh xuân": ["thanh xuân trung", "hạ đình", "khương đình", "nhân chính", "khương mai", "kim giang"],
+        "hoàng mai": ["giáp bát", "mai động", "tân mai", "hoàng liệt", "định công", "lĩnh nam"],
+        "long biên": ["ngọc lâm", "gia thụy", "bồ đề", "việt hưng", "long biên", "sài đồng"],
+        "hà đông": ["văn quán", "mộ lao", "quang trung", "hà cầu", "phúc la", "yết kiêu"],
+        "nam từ liêm": ["mỹ đình 1", "mỹ đình 2", "trung văn", "cầu diễn", "phú đô", "mễ trì"],
+        "bắc từ liêm": ["cổ nhuế", "cổ nhuế 1", "cổ nhuế 2", "đông ngạc", "xuân đỉnh", "phú diễn"],
+        "tây hồ": ["bưởi", "thụy khuê", "yên phụ", "quảng an", "nhật tân", "tứ liên"],
+        "sóc sơn": ["phù linh", "tiên dược", "mai đình", "quang tiến", "tân minh"],
+        "đông anh": ["đông anh", "uy nỗ", "cổ loa", "vĩnh ngọc", "nam hồng"],
+        "gia lâm": ["trâu quỳ", "dương xá", "đa tốn", "kiêu kỵ", "ninh hiệp"],
+        "thanh trì": ["văn điển", "tân triều", "ngọc hồi", "tả thanh oai", "hữu hòa"],
+        "hoài đức": ["trạm trôi", "an khánh", "vân canh", "la phù", "đức giang"],
+        "thạch thất": ["liên quan", "thạch hòa", "bình phú", "hữu bằng", "canh nậu"],
+        "quốc oai": ["quốc oai", "sài sơn", "phượng cách", "đông yên", "ngọc mỹ"],
+        "chương mỹ": ["chúc sơn", "xuân mai", "phú nghĩa", "đông phương yên", "ngọc hòa"]
+    };
+
+    function loadWardFilter() {
+        const districtValue = districtFilter.value;
+        wardFilter.innerHTML = '<option value="">Tất cả phường/xã</option>';
+
+        if (!districtValue || !hanoiWards[districtValue]) {
+            applyJobFilters();
+            return;
+        }
+
+        hanoiWards[districtValue].forEach(ward => {
+            const option = document.createElement('option');
+            option.value = ward;
+            option.textContent = ward.charAt(0).toUpperCase() + ward.slice(1);
+            wardFilter.appendChild(option);
+        });
+
+        applyJobFilters();
+    }
 
     function applyJobFilters() {
         const serviceValue = serviceFilter.value.toLowerCase();
-        const areaValue = areaFilter.value.toLowerCase();
+        const districtValue = districtFilter.value.toLowerCase();
+        const wardValue = wardFilter.value.toLowerCase();
         const dateValue = dateFilter.value;
 
         document.querySelectorAll('.job-card').forEach(card => {
@@ -464,15 +541,17 @@
             const date = card.dataset.date || '';
 
             const matchService = !serviceValue || service.includes(serviceValue);
-            const matchArea = !areaValue || address.includes(areaValue);
+            const matchDistrict = !districtValue || address.includes(districtValue);
+            const matchWard = !wardValue || address.includes(wardValue);
             const matchDate = !dateValue || date === dateValue;
 
-            card.style.display = (matchService && matchArea && matchDate) ? 'flex' : 'none';
+            card.style.display = (matchService && matchDistrict && matchWard && matchDate) ? 'flex' : 'none';
         });
     }
 
     serviceFilter.addEventListener('change', applyJobFilters);
-    areaFilter.addEventListener('change', applyJobFilters);
+    districtFilter.addEventListener('change', loadWardFilter);
+    wardFilter.addEventListener('change', applyJobFilters);
     dateFilter.addEventListener('change', applyJobFilters);
 </script>
 
