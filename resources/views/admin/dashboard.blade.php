@@ -132,7 +132,8 @@
     .status-cancelled { background: #fee2e2; color: #b91c1c; }
     .status-default { background: #f1f1f1; color: #555; }
 
-    .table td, .table th {
+    .table td,
+    .table th {
         vertical-align: middle;
         font-size: 13px;
     }
@@ -141,6 +142,50 @@
         color: #f5a623;
         font-size: 15px;
         letter-spacing: 1px;
+    }
+
+    .top-service-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 16px 0;
+        border-bottom: 1px solid #f3eeee;
+    }
+
+    .top-service-item:last-child {
+        border-bottom: none;
+    }
+
+    .top-service-rank {
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        background: #f8e6e6;
+        color: #7b5554;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        flex-shrink: 0;
+    }
+
+    .top-service-name {
+        font-weight: 900;
+        color: #2f2424;
+        font-size: 15px;
+    }
+
+    .top-service-meta {
+        font-size: 13px;
+        color: #8b7b7a;
+        margin-top: 4px;
+    }
+
+    .top-service-revenue {
+        font-size: 14px;
+        font-weight: 900;
+        color: #7b5554;
+        margin-top: 4px;
     }
 </style>
 
@@ -192,31 +237,31 @@
     </div>
 
     <div class="col-md-6 col-xl-3">
-    <div class="stat-card">
-        <div class="stat-icon"><i class="bi bi-calendar-heart"></i></div>
-        <div class="stat-label">Lịch chờ xác nhận</div>
-        <div class="stat-value">{{ $pendingBookingCount ?? 0 }}</div>
-        <div class="stat-up">Cần xử lý</div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="bi bi-calendar-heart"></i></div>
+            <div class="stat-label">Lịch chờ xác nhận</div>
+            <div class="stat-value">{{ $pendingBookingCount ?? 0 }}</div>
+            <div class="stat-up">Cần xử lý</div>
+        </div>
     </div>
-</div>
 
-<div class="col-md-6 col-xl-3">
-    <div class="stat-card">
-        <div class="stat-icon"><i class="bi bi-credit-card"></i></div>
-        <div class="stat-label">Thanh toán chờ xác nhận</div>
-        <div class="stat-value">{{ $pendingPaymentCount ?? 0 }}</div>
-        <div class="stat-up">Giao dịch chưa được xử lý</div>
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="bi bi-credit-card"></i></div>
+            <div class="stat-label">Thanh toán chờ xác nhận</div>
+            <div class="stat-value">{{ $pendingPaymentCount ?? 0 }}</div>
+            <div class="stat-up">Giao dịch chưa được xử lý</div>
+        </div>
     </div>
-</div>
 
-<div class="col-md-6 col-xl-3">
-    <div class="stat-card">
-        <div class="stat-icon"><i class="bi bi-cash-coin"></i></div>
-        <div class="stat-label">Doanh thu tháng này</div>
-        <div class="stat-value">{{ number_format($monthRevenue ?? 0, 0, ',', '.') }}đ</div>
-        <div class="stat-up">Đã thanh toán</div>
+    <div class="col-md-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="bi bi-cash-coin"></i></div>
+            <div class="stat-label">Doanh thu tháng này</div>
+            <div class="stat-value">{{ number_format($monthRevenue ?? 0, 0, ',', '.') }}đ</div>
+            <div class="stat-up">Đã thanh toán</div>
+        </div>
     </div>
-</div>
 </div>
 
 <div class="row g-4">
@@ -284,6 +329,45 @@
 
 <div class="dashboard-card mt-4">
     <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h5 class="fw-bold mb-1" style="color:#7b5554;">Dịch vụ được đặt nhiều nhất</h5>
+            <div class="text-muted small">Top dịch vụ được khách hàng lựa chọn nhiều nhất.</div>
+        </div>
+
+        <a href="{{ route('admin.services.index') }}" class="text-decoration-none" style="color:#d49a9a;">
+            Quản lý dịch vụ →
+        </a>
+    </div>
+
+    @forelse($topServices ?? [] as $index => $service)
+        <div class="top-service-item">
+            <div class="top-service-rank">
+                {{ $index + 1 }}
+            </div>
+
+            <div class="flex-grow-1">
+                <div class="top-service-name">
+                    Top {{ $index + 1 }}: {{ $service->service_name }}
+                </div>
+
+                <div class="top-service-meta">
+                    {{ $service->booking_details_count ?? 0 }} lượt đặt
+                </div>
+
+                <div class="top-service-revenue">
+                    {{ number_format($service->service_revenue ?? 0, 0, ',', '.') }}đ doanh thu
+                </div>
+            </div>
+        </div>
+    @empty
+        <div class="text-center text-muted py-4">
+            Chưa có dữ liệu dịch vụ được đặt.
+        </div>
+    @endforelse
+</div>
+
+<div class="dashboard-card mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="fw-bold mb-0" style="color:#7b5554;">Lịch hẹn gần đây</h5>
 
         <a href="{{ route('admin.bookings.index') }}" class="text-decoration-none" style="color:#d49a9a;">
@@ -342,28 +426,20 @@
                     <td>{{ $serviceName }}</td>
 
                     <td>
+                        @if($b->staff)
+                            <div class="d-flex align-items-center gap-2">
+                                <img src="{{ $staffImage }}"
+                                     class="staff-mini-avatar"
+                                     alt="Ảnh nhân viên">
 
-    @if($b->staff)
-
-        <div class="d-flex align-items-center gap-2">
-
-            <img src="{{ $staffImage }}"
-                 class="staff-mini-avatar"
-                 alt="Ảnh nhân viên">
-
-            <span>{{ $b->staff->full_name }}</span>
-
-        </div>
-
-    @else
-
-        <span class="text-muted">
-            Chưa phân công
-        </span>
-
-    @endif
-
-</td>
+                                <span>{{ $b->staff->full_name }}</span>
+                            </div>
+                        @else
+                            <span class="text-muted">
+                                Chưa phân công
+                            </span>
+                        @endif
+                    </td>
 
                     <td>
                         {{ $b->booking_date ?? '---' }}

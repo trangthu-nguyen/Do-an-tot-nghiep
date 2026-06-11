@@ -9,6 +9,7 @@ use App\Models\Notification;
 use App\Models\Payment;
 use App\Models\Service;
 use App\Models\Staff;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
@@ -24,6 +25,8 @@ class BookingService
     {
         return DB::transaction(function () use ($data, $customerId) {
             $service = Service::where('service_id', $data['service_id'])->firstOrFail();
+
+            $this->checkBookingTimeAllowed($data['booking_date'], $data['booking_time']);
 
             $this->checkSlotAvailable($data['booking_date'], $data['booking_time']);
 
@@ -86,16 +89,48 @@ class BookingService
             throw new Exception('Bạn không có quyền hủy booking này!');
         }
 
-        if ($booking->status != self::STATUS_PENDING) {
-            throw new Exception('Chỉ booking đang chờ xác nhận mới được hủy!');
+        if ($booking->status == self::STATUS_CANCELLED) {
+            throw new Exception('Booking này đã được hủy trước đó!');
         }
 
-        $booking->status = self::STATUS_CANCELLED;
-        $booking->save();
+        if ($booking->status == self::STATUS_DOING) {
+            throw new Exception('Booking đang thực hiện nên không thể hủy!');
+        }
 
-        $this->sendCancelBookingNotifications($booking, $customerId);
+        if ($booking->status == self::STATUS_DONE) {
+            throw new Exception('Booking đã hoàn thành nên không thể hủy!');
+        }
 
-        return true;
+        if ($booking->status == self::STATUS_CONFIRMED) {
+            $bookingDateTime = Carbon::parse($booking->booking_date . ' ' . $booking->booking_time);
+
+            if ($bookingDateTime->lt(now()->addHours(2))) {
+                throw new Exception('Lịch đã xác nhận chỉ được hủy trước giờ hẹn ít nhất 2 giờ!');
+            }
+        }
+
+        return DB::transaction(function () use ($booking, $customerId) {
+            $booking->status = self::STATUS_CANCELLED;
+            $booking->save();
+
+            $payment = Payment::where('booking_id', $booking->booking_id)->first();
+
+            if ($payment) {
+                if ($payment->payment_status == 'paid') {
+                    $payment->update([
+                        'payment_status' => 'refunded',
+                    ]);
+                } elseif ($payment->payment_status == 'pending') {
+                    $payment->update([
+                        'payment_status' => 'cancelled',
+                    ]);
+                }
+            }
+
+            $this->sendCancelBookingNotifications($booking, $customerId);
+
+            return true;
+        });
     }
 
     public function acceptBookingByStaff($booking, $staffId): bool
@@ -115,6 +150,15 @@ class BookingService
         return true;
     }
 
+    private function checkBookingTimeAllowed($bookingDate, $bookingTime): void
+    {
+        $bookingDateTime = Carbon::parse($bookingDate . ' ' . $bookingTime);
+
+        if ($bookingDateTime->lt(now()->addHours(2))) {
+            throw new Exception('Vui lòng đặt lịch trước thời gian thực hiện ít nhất 2 giờ!');
+        }
+    }
+
     private function checkSlotAvailable($bookingDate, $bookingTime): void
     {
         $exists = Booking::where('booking_date', $bookingDate)
@@ -129,13 +173,14 @@ class BookingService
 
     private function createPayment(Booking $booking, $amount, string $paymentMethod): void
     {
-        $isOnline = in_array($paymentMethod, ['momo', 'vnpay', 'bank']);
+        $paymentMethod = strtolower(trim($paymentMethod));
+        $isAutoPaid = in_array($paymentMethod, ['momo', 'vnpay']);
 
         Payment::create([
             'booking_id' => $booking->booking_id,
             'amount' => $amount,
             'payment_method' => $paymentMethod,
-            'payment_status' => $isOnline ? 'paid' : 'pending',
+            'payment_status' => $isAutoPaid ? 'paid' : 'pending',
             'payment_date' => now(),
         ]);
     }
@@ -172,12 +217,31 @@ class BookingService
 
     private function sendCancelBookingNotifications(Booking $booking, $customerId): void
     {
+        $payment = Payment::where('booking_id', $booking->booking_id)->first();
+
+        $refundMessage = '';
+
+        if ($payment && $payment->payment_status == 'refunded') {
+            $refundMessage = ' Thanh toán của bạn đã được cập nhật sang trạng thái hoàn tiền.';
+        } elseif ($payment && $payment->payment_status == 'cancelled') {
+            $refundMessage = ' Giao dịch thanh toán chưa hoàn tất đã được hủy.';
+        }
+
         $this->createNotification(
             'customer',
             $customerId,
             'Hủy lịch thành công',
-            'Bạn đã hủy lịch #' . $booking->booking_id . ' thành công.'
+            'Bạn đã hủy lịch #' . $booking->booking_id . ' thành công.' . $refundMessage
         );
+
+        foreach (Admin::all() as $admin) {
+            $this->createNotification(
+                'admin',
+                $admin->admin_id,
+                'Khách hàng đã hủy lịch',
+                'Booking #' . $booking->booking_id . ' đã được khách hàng hủy.'
+            );
+        }
 
         if ($booking->staff_id) {
             $this->createNotification(

@@ -10,6 +10,7 @@ use App\Models\Notification;
 use App\Models\Admin;
 use App\Models\Service;
 use App\Models\Staff;
+use Carbon\Carbon;
 
 class PaymentController extends Controller
 {
@@ -105,6 +106,18 @@ class PaymentController extends Controller
         $service = Service::findOrFail($request->service_id);
         $totalAmount = $service->price;
 
+        $bookingDateTime = Carbon::parse($request->booking_date . ' ' . $request->booking_time);
+
+        if ($bookingDateTime->lt(now()->addHours(2))) {
+            return redirect()
+                ->back()
+                ->withInput()
+                ->with('error', 'Vui lòng đặt lịch trước thời gian thực hiện ít nhất 2 giờ!');
+        }
+
+        $paymentMethod = strtolower(trim($request->payment_method));
+        $isAutoPaid = in_array($paymentMethod, ['momo', 'vnpay']);
+
         $booking = Booking::create([
             'customer_id' => session('customer_id'),
             'booking_date' => $request->booking_date,
@@ -122,8 +135,8 @@ class PaymentController extends Controller
         Payment::create([
             'booking_id' => $booking->booking_id,
             'amount' => $totalAmount,
-            'payment_method' => $request->payment_method,
-            'payment_status' => 'pending',
+            'payment_method' => $paymentMethod,
+            'payment_status' => $isAutoPaid ? 'paid' : 'pending',
             'payment_date' => now()
         ]);
 
@@ -132,7 +145,9 @@ class PaymentController extends Controller
                 'user_type' => 'admin',
                 'user_id' => $admin->admin_id,
                 'title' => 'Có lịch đặt mới',
-                'content' => 'Khách hàng vừa đặt lịch và chọn thanh toán trực tuyến. Mã lịch: #' . $booking->booking_id,
+                'content' => 'Khách hàng vừa đặt lịch và chọn thanh toán ' .
+                    strtoupper($paymentMethod) .
+                    '. Mã lịch: #' . $booking->booking_id,
                 'is_read' => 0,
                 'created_at' => now()
             ]);
@@ -153,8 +168,13 @@ class PaymentController extends Controller
             ]);
         }
 
+        if ($isAutoPaid) {
+            return redirect()->route('customer.bookings.index')
+                ->with('success', 'Đặt lịch và thanh toán thành công!');
+        }
+
         return redirect()->route('customer.payments.wait', $booking->booking_id)
-            ->with('success', 'Đặt lịch thành công, vui lòng hoàn tất thanh toán!');
+            ->with('success', 'Đặt lịch thành công, vui lòng chờ admin xác nhận thanh toán!');
     }
 
     public function wait($booking_id)

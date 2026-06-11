@@ -31,27 +31,19 @@ use App\Http\Controllers\Staff\BookingController as StaffBookingController;
 use App\Http\Controllers\Staff\ProfileController as StaffProfileController;
 use App\Http\Controllers\Staff\NotificationController as StaffNotificationController;
 
-
-// ================== TRANG CHỦ ==================
 Route::get('/', function () {
     return redirect()->route('customer.home');
 });
 
-
-// ================== PAYMENT INIT ONLINE ==================
 Route::post('/payment/init', [CustomerPaymentController::class, 'init'])
     ->name('payment.init');
 
-
-// ================== ADMIN ROUTES ==================
 Route::prefix('admin')->name('admin.')->group(function () {
-
     Route::get('/login', [AdminAuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AdminAuthController::class, 'login'])->name('login.submit');
     Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
 
     Route::middleware(['admin_auth'])->group(function () {
-
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
         Route::resource('/categories', CategoryController::class);
@@ -77,8 +69,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         Route::get('/feedbacks', [AdminFeedbackController::class, 'index'])->name('feedbacks.index');
         Route::post('/feedbacks/{id}/approve', [AdminFeedbackController::class, 'approve'])->name('feedbacks.approve');
-        Route::post('/feedbacks/{id}/reject', [AdminFeedbackController::class, 'reject'])->name('feedbacks.reject');
-        Route::delete('/feedbacks/{id}', [AdminFeedbackController::class, 'destroy'])->name('feedbacks.destroy');
+        Route::post('/feedbacks/{id}/hide', [AdminFeedbackController::class, 'hide'])->name('feedbacks.hide');
+        Route::post('/feedbacks/{id}/show-again', [AdminFeedbackController::class, 'showAgain'])->name('feedbacks.showAgain');
 
         Route::get('/notifications', [AdminNotificationController::class, 'index'])->name('notifications.index');
         Route::post('/notifications/read-all', [AdminNotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
@@ -86,10 +78,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     });
 });
 
-
-// ================== CUSTOMER ROUTES ==================
 Route::prefix('customer')->name('customer.')->group(function () {
-
     Route::get('/home', [HomeController::class, 'index'])->name('home');
 
     Route::get('/services', [CustomerServiceController::class, 'index'])->name('services.index');
@@ -106,7 +95,6 @@ Route::prefix('customer')->name('customer.')->group(function () {
     Route::post('/logout', [CustomerAuthController::class, 'logout'])->name('logout');
 
     Route::middleware(['customer_auth'])->group(function () {
-
         Route::get('/profile', [CustomerProfileController::class, 'index'])->name('profile.index');
         Route::get('/profile/edit', [CustomerProfileController::class, 'edit'])->name('profile.edit');
         Route::post('/profile/update', [CustomerProfileController::class, 'update'])->name('profile.update');
@@ -136,16 +124,12 @@ Route::prefix('customer')->name('customer.')->group(function () {
     });
 });
 
-
-// ================== STAFF ROUTES ==================
 Route::prefix('staff')->name('staff.')->group(function () {
-
     Route::get('/login', [StaffAuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [StaffAuthController::class, 'login'])->name('login.submit');
     Route::post('/logout', [StaffAuthController::class, 'logout'])->name('logout');
 
     Route::middleware(['staff_auth'])->group(function () {
-
         Route::get('/work-history', [StaffBookingController::class, 'workHistory'])->name('workHistory');
 
         Route::get('/profile', [StaffProfileController::class, 'index'])->name('profile.index');

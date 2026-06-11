@@ -42,7 +42,7 @@ class CustomerController extends Controller
             $customer->completed_count = $completedCount;
 
             if ($paidTotal >= 5000000 || $completedCount >= 5) {
-                $customer->rank_label = 'VIP - Đề xuất tặng voucher';
+                $customer->rank_label = 'VIP';
             } elseif ($paidTotal >= 2000000 || $completedCount >= 3) {
                 $customer->rank_label = 'Khách hàng thân thiết';
             } else {
@@ -73,7 +73,7 @@ class CustomerController extends Controller
                 $selectedCustomer->completed_count = $selectedCustomer->bookings->where('status', 3)->count();
 
                 if ($selectedCustomer->paid_total >= 5000000 || $selectedCustomer->completed_count >= 5) {
-                    $selectedCustomer->rank_label = 'VIP - Đề xuất tặng voucher';
+                    $selectedCustomer->rank_label = 'VIP';
                 } elseif ($selectedCustomer->paid_total >= 2000000 || $selectedCustomer->completed_count >= 3) {
                     $selectedCustomer->rank_label = 'Khách hàng thân thiết';
                 } else {

@@ -67,14 +67,14 @@ class FeedbackController extends Controller
             'customer_id' => session('customer_id'),
             'rating' => $request->rating,
             'comment' => $request->comment,
+            'status' => 0,
+            'is_hidden' => 0,
             'created_at' => now()
         ]);
 
         $serviceName = optional($booking->bookingDetails->first()?->service)->service_name ?? 'dịch vụ';
 
-        $admins = Admin::all();
-
-        foreach ($admins as $admin) {
+        foreach (Admin::all() as $admin) {
             Notification::create([
                 'user_type' => 'admin',
                 'user_id' => $admin->admin_id,

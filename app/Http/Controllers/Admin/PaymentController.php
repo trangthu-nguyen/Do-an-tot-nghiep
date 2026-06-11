@@ -11,6 +11,8 @@ class PaymentController extends Controller
     public function index(Request $request)
     {
         $query = Payment::with(['booking.customer'])
+            ->orderByRaw('payment_date IS NULL ASC')
+            ->orderBy('payment_date', 'desc')
             ->orderBy('payment_id', 'desc');
 
         if ($request->filled('keyword')) {
@@ -58,6 +60,7 @@ class PaymentController extends Controller
             ->sum('amount');
 
         $pendingAmount = Payment::where('payment_status', 'pending')->sum('amount');
+
         $pendingCount = Payment::where('payment_status', 'pending')->count();
 
         return view('admin.payments.index', compact(
@@ -73,7 +76,7 @@ class PaymentController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'payment_status' => 'required|in:pending,paid,unpaid'
+            'payment_status' => 'required|in:pending,paid,unpaid,refunded,cancelled'
         ]);
 
         $payment = Payment::findOrFail($id);

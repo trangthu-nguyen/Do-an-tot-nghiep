@@ -94,7 +94,8 @@ class BookingController extends Controller
 
     public function cancel($id)
     {
-        $booking = Booking::with('bookingDetails.service')->findOrFail($id);
+        $booking = Booking::with(['bookingDetails.service', 'payment'])
+            ->findOrFail($id);
 
         try {
             $this->bookingService->cancelBookingByCustomer(
@@ -104,7 +105,7 @@ class BookingController extends Controller
 
             return redirect()
                 ->back()
-                ->with('success', 'Hủy lịch thành công!');
+                ->with('success', 'Hủy lịch thành công! Nếu lịch đã thanh toán, hệ thống đã cập nhật trạng thái hoàn tiền.');
         } catch (Exception $e) {
             return back()->with('error', $e->getMessage());
         }

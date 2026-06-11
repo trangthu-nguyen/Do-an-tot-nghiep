@@ -15,16 +15,16 @@ class Feedback extends Model
         'customer_id',
         'rating',
         'comment',
-        'created_at'
+        'created_at',
+        'status',
+        'is_hidden',
     ];
 
-    // Quan hệ: Feedback thuộc về Customer
     public function customer()
     {
         return $this->belongsTo(Customer::class, 'customer_id', 'customer_id');
     }
 
-    // Quan hệ: Feedback thuộc về Booking
     public function booking()
     {
         return $this->belongsTo(Booking::class, 'booking_id', 'booking_id');

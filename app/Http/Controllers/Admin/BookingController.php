@@ -8,7 +8,6 @@ use App\Models\Booking;
 use App\Models\Staff;
 use App\Models\Notification;
 use App\Services\BookingService;
-use App\Models\StaffSchedule;
 
 class BookingController extends Controller
 {
@@ -25,65 +24,90 @@ class BookingController extends Controller
             ->orderBy('booking_date', 'desc')
             ->orderBy('booking_time', 'desc');
 
+        if ($request->filled('keyword')) {
+            $keyword = trim($request->keyword);
+
+            $query->where(function ($q) use ($keyword) {
+                $q->where('booking_id', 'like', "%{$keyword}%")
+                    ->orWhereHas('customer', function ($cus) use ($keyword) {
+                        $cus->where('full_name', 'like', "%{$keyword}%")
+                            ->orWhere('phone', 'like', "%{$keyword}%")
+                            ->orWhere('email', 'like', "%{$keyword}%");
+                    })
+                    ->orWhereHas('staff', function ($staff) use ($keyword) {
+                        $staff->where('full_name', 'like', "%{$keyword}%")
+                            ->orWhere('phone', 'like', "%{$keyword}%");
+                    })
+                    ->orWhereHas('bookingDetails.service', function ($service) use ($keyword) {
+                        $service->where('service_name', 'like', "%{$keyword}%");
+                    });
+            });
+        }
+
         if ($request->filled('status')) {
             $query->where('status', $request->status);
+        }
+
+        if ($request->filled('booking_date')) {
+            $query->whereDate('booking_date', $request->booking_date);
         }
 
         $bookings = $query->get();
 
         $totalBookings = Booking::count();
         $pendingBookings = Booking::where('status', 0)->count();
-        $todayBookings = Booking::whereDate('booking_date', today())->count();
-        $totalRevenue = Booking::where('status', 3)->sum('total_amount');
-
-        $staffs = Staff::limit(4)->get();
-        $cancelledBookings = Booking::where('status', 4)->count();
 
         $todayBookings = Booking::whereDate('booking_date', today())
             ->where('status', '!=', 4)
             ->count();
+
+        $cancelledBookings = Booking::where('status', 4)->count();
+        $totalRevenue = Booking::where('status', 3)->sum('total_amount');
+
+        $staffs = Staff::limit(4)->get();
+
         return view('admin.bookings.index', compact(
             'bookings',
-        'totalBookings',
-        'pendingBookings',
-        'todayBookings',
-        'cancelledBookings',
-        'totalRevenue',
-        'staffs'
+            'totalBookings',
+            'pendingBookings',
+            'todayBookings',
+            'cancelledBookings',
+            'totalRevenue',
+            'staffs'
         ));
     }
 
     public function show($id)
-{
-    $booking = Booking::with([
-        'customer',
-        'bookingDetails.service',
-        'staff',
-        'payment'
-    ])->findOrFail($id);
+    {
+        $booking = Booking::with([
+            'customer',
+            'bookingDetails.service',
+            'staff',
+            'payment'
+        ])->findOrFail($id);
 
-    $bookingDate = $booking->booking_date;
-    $bookingTime = $booking->booking_time;
+        $bookingDate = $booking->booking_date;
+        $bookingTime = $booking->booking_time;
 
-    $staffs = Staff::where('status', 1)
-        ->whereIn('staff_id', function ($query) use ($bookingDate, $bookingTime) {
-            $query->select('staff_id')
-                ->from('staff_schedules')
-                ->whereDate('work_date', $bookingDate)
-                ->whereIn('status', ['available', 'approved'])
-                ->whereTime('start_time', '<=', $bookingTime)
-                ->whereTime('end_time', '>=', $bookingTime);
-        })
-        ->whereDoesntHave('bookings', function ($q) use ($bookingDate, $bookingTime, $booking) {
-            $q->whereDate('booking_date', $bookingDate)
-              ->where('booking_time', $bookingTime)
-              ->where('booking_id', '!=', $booking->booking_id)
-              ->whereIn('status', [0, 1, 2]);
-        })
-        ->get();
+        $staffs = Staff::where('status', 1)
+            ->whereIn('staff_id', function ($query) use ($bookingDate, $bookingTime) {
+                $query->select('staff_id')
+                    ->from('staff_schedules')
+                    ->whereDate('work_date', $bookingDate)
+                    ->whereIn('status', ['available', 'approved'])
+                    ->whereTime('start_time', '<=', $bookingTime)
+                    ->whereTime('end_time', '>=', $bookingTime);
+            })
+            ->whereDoesntHave('bookings', function ($q) use ($bookingDate, $bookingTime, $booking) {
+                $q->whereDate('booking_date', $bookingDate)
+                    ->where('booking_time', $bookingTime)
+                    ->where('booking_id', '!=', $booking->booking_id)
+                    ->whereIn('status', [0, 1, 2]);
+            })
+            ->get();
 
-    return view('admin.bookings.show', compact('booking', 'staffs'));
-}
+        return view('admin.bookings.show', compact('booking', 'staffs'));
+    }
 
     public function assignStaff(Request $request, $id)
     {
@@ -91,7 +115,23 @@ class BookingController extends Controller
             'staff_id' => 'required'
         ]);
 
-        $booking = Booking::with(['customer', 'bookingDetails.service'])->findOrFail($id);
+        $booking = Booking::with([
+            'customer',
+            'bookingDetails.service'
+        ])->findOrFail($id);
+
+        $staffBusy = Booking::where('staff_id', $request->staff_id)
+            ->whereDate('booking_date', $booking->booking_date)
+            ->where('booking_time', $booking->booking_time)
+            ->where('booking_id', '!=', $booking->booking_id)
+            ->whereIn('status', [0, 1, 2])
+            ->exists();
+
+        if ($staffBusy) {
+            return redirect()
+                ->back()
+                ->with('error', 'Nhân viên này đã có lịch trong khung giờ này!');
+        }
 
         $booking->update([
             'staff_id' => $request->staff_id,
@@ -116,7 +156,9 @@ class BookingController extends Controller
             'created_at' => now()
         ]);
 
-        return redirect()->back()->with('success', 'Phân công nhân viên thành công!');
+        return redirect()
+            ->back()
+            ->with('success', 'Phân công nhân viên thành công!');
     }
 
     public function updateStatus(Request $request, $id)

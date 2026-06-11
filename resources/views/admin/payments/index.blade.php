@@ -36,10 +36,12 @@
     .method{font-weight:800;color:#6f6464;font-size:13px}
     .date{font-size:13px;color:#8a7e7e;font-weight:700}
 
-    .badge-pay{border-radius:999px;padding:7px 12px;font-size:11px;font-weight:900}
+    .badge-pay{border-radius:999px;padding:7px 12px;font-size:11px;font-weight:900;display:inline-block}
     .paid{background:#dcfce7;color:#15803d}
     .pending{background:#fff4d6;color:#a16207}
     .unpaid{background:#ffe4e6;color:#be123c}
+    .refunded{background:#dbeafe;color:#1d4ed8}
+    .cancelled{background:#e5e7eb;color:#374151}
 
     .select-status{border-radius:12px;border:1px solid var(--border);font-size:13px;font-weight:700;padding:8px}
     .btn-save{border:0;background:var(--primary);color:white;border-radius:12px;padding:8px 12px;font-size:13px;font-weight:900}
@@ -59,13 +61,13 @@
     <div class="stat-card">
         <div class="stat-label">Doanh thu hôm nay</div>
         <div class="stat-value">{{ number_format($todayRevenue,0,',','.') }}đ</div>
-        <div class="stat-note">Đã thanh toán hôm nay</div>
+        <div class="stat-note">Chỉ tính giao dịch đã thanh toán</div>
     </div>
 
     <div class="stat-card">
         <div class="stat-label">Doanh thu tháng này</div>
         <div class="stat-value">{{ number_format($monthRevenue,0,',','.') }}đ</div>
-        <div class="stat-note">Tính theo ngày thanh toán</div>
+        <div class="stat-note">Không tính đơn đã hủy/hoàn tiền</div>
     </div>
 
     <div class="stat-card">
@@ -99,6 +101,8 @@
                 <option value="paid" {{ request('status') == 'paid' ? 'selected' : '' }}>Đã thanh toán</option>
                 <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Chờ xác nhận</option>
                 <option value="unpaid" {{ request('status') == 'unpaid' ? 'selected' : '' }}>Chưa thanh toán</option>
+                <option value="refunded" {{ request('status') == 'refunded' ? 'selected' : '' }}>Đã hoàn tiền</option>
+                <option value="cancelled" {{ request('status') == 'cancelled' ? 'selected' : '' }}>Đơn đã hủy</option>
             </select>
         </div>
 
@@ -184,12 +188,18 @@
                         $statusText = match($status) {
                             'paid' => 'Đã thanh toán',
                             'pending' => 'Chờ xác nhận',
+                            'unpaid' => 'Chưa thanh toán',
+                            'refunded' => 'Đã hoàn tiền',
+                            'cancelled' => 'Đơn đã hủy',
                             default => 'Chưa thanh toán',
                         };
 
                         $badgeClass = match($status) {
                             'paid' => 'paid',
                             'pending' => 'pending',
+                            'unpaid' => 'unpaid',
+                            'refunded' => 'refunded',
+                            'cancelled' => 'cancelled',
                             default => 'unpaid',
                         };
                     @endphp
@@ -241,6 +251,12 @@
                                         </option>
                                         <option value="unpaid" {{ $status == 'unpaid' ? 'selected' : '' }}>
                                             Chưa thanh toán
+                                        </option>
+                                        <option value="refunded" {{ $status == 'refunded' ? 'selected' : '' }}>
+                                            Đã hoàn tiền
+                                        </option>
+                                        <option value="cancelled" {{ $status == 'cancelled' ? 'selected' : '' }}>
+                                            Đơn đã hủy
                                         </option>
                                     </select>
 

@@ -184,6 +184,30 @@
         border-color: #7b5554;
     }
 
+    .time-slot.disabled-slot {
+        opacity: 0.4;
+        cursor: not-allowed;
+        background: #f1f1f1;
+        color: #999;
+        border-color: #e5e5e5;
+    }
+
+    .time-slot.disabled-slot:hover {
+        background: #f1f1f1;
+        transform: none;
+    }
+
+    .booking-warning {
+        background: #fff4d6;
+        color: #8a5a00;
+        border: 1px solid #f3d58a;
+        padding: 12px 14px;
+        border-radius: 14px;
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 14px;
+    }
+
     .payment-card {
         border: 2px solid #eadede;
         border-radius: 18px;
@@ -318,6 +342,8 @@
 
     let paymentMethod = "cod";
 
+    const MIN_BOOKING_HOURS = 2;
+
     function startBooking() {
         currentStep = 1;
         selectedDate = '';
@@ -336,6 +362,10 @@
             body.innerHTML = `
                 <input type="hidden" id="hidden_date" value="${selectedDate}">
                 <input type="hidden" id="hidden_time" value="${selectedTime}">
+
+                <div class="booking-warning">
+                    Vui lòng đặt lịch trước thời gian thực hiện ít nhất ${MIN_BOOKING_HOURS} giờ.
+                </div>
 
                 <h6 class="mb-3">Chọn ngày</h6>
                 <div class="date-picker" id="datePicker"></div>
@@ -656,40 +686,33 @@
         ];
 
         const now = new Date();
+        const minBookingTime = new Date(now.getTime() + MIN_BOOKING_HOURS * 60 * 60 * 1000);
 
         slots.forEach(time => {
             let div = document.createElement('div');
             div.className = 'time-slot';
             div.textContent = time;
 
-            let isPast = false;
+            let isBlocked = false;
 
             if (selectedDate) {
-                const selected = new Date(selectedDate);
+                const [year, month, day] = selectedDate.split('-').map(Number);
+                const [hour, minute] = time.split(':').map(Number);
 
-                const todayStr = now.toISOString().split('T')[0];
-                const selectedStr = selected.toISOString().split('T')[0];
+                const slotTime = new Date(year, month - 1, day, hour, minute, 0);
 
-                if (selectedStr === todayStr) {
-                    const [hour, minute] = time.split(':');
-
-                    const slotTime = new Date();
-
-                    slotTime.setHours(parseInt(hour));
-                    slotTime.setMinutes(parseInt(minute));
-                    slotTime.setSeconds(0);
-
-                    if (slotTime <= now) {
-                        isPast = true;
-                    }
+                if (slotTime < minBookingTime) {
+                    isBlocked = true;
                 }
             }
 
-            if (isPast) {
-                div.style.opacity = '0.4';
-                div.style.cursor = 'not-allowed';
-                div.style.background = '#f1f1f1';
-                div.style.color = '#999';
+            if (isBlocked) {
+                div.classList.add('disabled-slot');
+                div.title = `Vui lòng đặt lịch trước thời gian thực hiện ít nhất ${MIN_BOOKING_HOURS} giờ`;
+
+                div.onclick = () => {
+                    alert(`Vui lòng đặt lịch trước thời gian thực hiện ít nhất ${MIN_BOOKING_HOURS} giờ!`);
+                };
             } else {
                 div.onclick = () => {
                     document.querySelectorAll('.time-slot')

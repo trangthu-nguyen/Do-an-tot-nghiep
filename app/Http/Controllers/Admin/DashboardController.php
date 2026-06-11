@@ -116,6 +116,14 @@ class DashboardController extends Controller
             'Đã hủy' => Booking::where('status', 4)->count(),
         ];
 
+        $topServices = Service::withCount('bookingDetails')
+            ->withSum('bookingDetails as service_revenue', 'price')
+            ->orderByDesc('booking_details_count')
+            ->limit(5)
+            ->get();
+
+        $maxServiceBookings = $topServices->max('booking_details_count') ?? 0;
+
         return view('admin.dashboard', compact(
             'totalBookings',
             'totalServices',
@@ -137,7 +145,9 @@ class DashboardController extends Controller
             'months',
             'revenues',
             'bookingStatus',
-            'topStaffId'
+            'topStaffId',
+            'topServices',
+            'maxServiceBookings'
         ));
     }
 }

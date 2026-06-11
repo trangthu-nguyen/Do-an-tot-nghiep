@@ -17,7 +17,11 @@
     .stat-num{font-size:28px;font-weight:900;color:#7b5554}
     .stat-note{font-size:12px;color:#9b8f8f;font-weight:700}
     .filter-box{padding:16px 20px;margin-bottom:20px}
-    .filter-box select{border-radius:14px;border:1px solid #eadede;padding:9px 14px}
+    .filter-form{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .filter-form input,.filter-form select{border-radius:14px;border:1px solid #eadede;padding:10px 14px;min-width:180px}
+    .filter-form input[name="keyword"]{min-width:280px}
+    .btn-filter{background:#7b5554;color:white;border:0;border-radius:14px;padding:10px 16px;font-weight:800}
+    .btn-reset{background:#f4eeee;color:#7b5554;border-radius:14px;padding:10px 16px;font-weight:800;text-decoration:none}
     .bk-layout{display:grid;grid-template-columns:1fr 280px;gap:20px}
     .table-title{padding:20px 24px;border-bottom:1px solid #f1e7e7;font-size:20px;font-weight:900;color:#2f2323}
     .table th{font-size:12px;text-transform:uppercase;color:#8b8080;padding:15px 16px}
@@ -31,26 +35,14 @@
     .side-box{padding:20px;margin-bottom:18px}
     .staff-row{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f1e7e7;padding:10px 0}
     .avatar{width:34px;height:34px;border-radius:50%;object-fit:cover;margin-right:8px}
-    @media(max-width:991px){.bk-top{flex-direction:column;align-items:flex-start}.stats,.bk-layout{grid-template-columns:1fr}}
+    @media(max-width:991px){.bk-top{flex-direction:column;align-items:flex-start}.stats,.bk-layout{grid-template-columns:1fr}.filter-form input,.filter-form select{width:100%;min-width:100%}}
 </style>
 
 <div class="bk-top">
     <div>
-        
         <h1 class="bk-heading">Lịch đặt dịch vụ</h1>
         <p class="bk-sub">Theo dõi lịch đặt, trạng thái thanh toán, nhân viên phụ trách và tiến độ thực hiện.</p>
     </div>
-
-    <form method="GET" action="{{ route('admin.bookings.index') }}">
-        <select name="status" onchange="this.form.submit()" class="form-select" style="border-radius:14px;">
-            <option value="">Tất cả trạng thái</option>
-            <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>Chờ xác nhận</option>
-            <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>Đã xác nhận</option>
-            <option value="2" {{ request('status') === '2' ? 'selected' : '' }}>Đang thực hiện</option>
-            <option value="3" {{ request('status') === '3' ? 'selected' : '' }}>Hoàn thành</option>
-            <option value="4" {{ request('status') === '4' ? 'selected' : '' }}>Đã hủy</option>
-        </select>
-    </form>
 </div>
 
 <div class="stats">
@@ -67,9 +59,9 @@
     </div>
 
     <div class="bk-card stat">
-    <div class="bk-label">Lịch hôm nay</div>
-    <div class="stat-num">{{ $todayBookings }}</div>
-    <div class="stat-note">Cần thực hiện</div>
+        <div class="bk-label">Lịch hôm nay</div>
+        <div class="stat-num">{{ $todayBookings }}</div>
+        <div class="stat-note">Cần thực hiện</div>
     </div>
 
     <div class="bk-card stat">
@@ -85,10 +77,45 @@
     </div>
 </div>
 
+<div class="bk-card filter-box">
+    <form method="GET" action="{{ route('admin.bookings.index') }}" class="filter-form">
+        <input type="text"
+               name="keyword"
+               value="{{ request('keyword') }}"
+               placeholder="Tìm mã booking, tên khách, SĐT, nhân viên, dịch vụ...">
+
+        <select name="status">
+            <option value="">Tất cả trạng thái</option>
+            <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>Chờ xác nhận</option>
+            <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>Đã xác nhận</option>
+            <option value="2" {{ request('status') === '2' ? 'selected' : '' }}>Đang thực hiện</option>
+            <option value="3" {{ request('status') === '3' ? 'selected' : '' }}>Hoàn thành</option>
+            <option value="4" {{ request('status') === '4' ? 'selected' : '' }}>Đã hủy</option>
+        </select>
+
+        <input type="date"
+               name="booking_date"
+               value="{{ request('booking_date') }}">
+
+        <button type="submit" class="btn-filter">
+            <i class="bi bi-search"></i> Tìm kiếm
+        </button>
+
+        <a href="{{ route('admin.bookings.index') }}" class="btn-reset">
+            Làm mới
+        </a>
+    </form>
+</div>
+
 <div class="bk-layout">
 
     <div class="bk-card overflow-hidden">
-        <div class="table-title">Booking Details</div>
+        <div class="table-title">
+            Booking Details
+            <div class="small-muted mt-1">
+                Hiển thị {{ $bookings->count() }} lịch đặt
+            </div>
+        </div>
 
         <div class="table-responsive">
             <table class="table align-middle mb-0">
@@ -173,7 +200,7 @@
                     @empty
                         <tr>
                             <td colspan="7" class="text-center text-muted py-5">
-                                Chưa có booking nào.
+                                Không tìm thấy booking phù hợp.
                             </td>
                         </tr>
                     @endforelse
@@ -192,19 +219,19 @@
 
             @forelse($staffs as $staff)
                 @php
-    $staffPortraits = [
-        'https://randomuser.me/api/portraits/women/44.jpg',
-        'https://randomuser.me/api/portraits/women/65.jpg',
-        'https://randomuser.me/api/portraits/women/68.jpg',
-        'https://randomuser.me/api/portraits/women/71.jpg',
-        'https://randomuser.me/api/portraits/women/72.jpg',
-        'https://randomuser.me/api/portraits/women/76.jpg',
-        'https://randomuser.me/api/portraits/women/79.jpg',
-        'https://randomuser.me/api/portraits/women/81.jpg',
-    ];
+                    $staffPortraits = [
+                        'https://randomuser.me/api/portraits/women/44.jpg',
+                        'https://randomuser.me/api/portraits/women/65.jpg',
+                        'https://randomuser.me/api/portraits/women/68.jpg',
+                        'https://randomuser.me/api/portraits/women/71.jpg',
+                        'https://randomuser.me/api/portraits/women/72.jpg',
+                        'https://randomuser.me/api/portraits/women/76.jpg',
+                        'https://randomuser.me/api/portraits/women/79.jpg',
+                        'https://randomuser.me/api/portraits/women/81.jpg',
+                    ];
 
-    $staffAvatar = $staffPortraits[$staff->staff_id % count($staffPortraits)];
-@endphp
+                    $staffAvatar = $staffPortraits[$staff->staff_id % count($staffPortraits)];
+                @endphp
 
                 <div class="staff-row">
                     <div class="d-flex align-items-center">
@@ -229,7 +256,7 @@
         <div class="bk-info side-box">
             <h5 class="fw-bold" style="color:#7b5554;">Gợi ý quản lý</h5>
             <p class="mb-0 text-muted" style="font-size:14px;line-height:1.7;">
-                Bấm biểu tượng mắt để xem chi tiết, phân công nhân viên và cập nhật trạng thái lịch đặt.
+                Có thể tìm kiếm theo mã booking, khách hàng, số điện thoại, nhân viên, dịch vụ hoặc lọc theo trạng thái/ngày đặt.
             </p>
         </div>
     </div>
