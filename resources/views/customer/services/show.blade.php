@@ -158,13 +158,14 @@
     }
 
     .time-slot {
-        width: 92px;
-        height: 50px;
+        width: 96px;
+        min-height: 58px;
         text-align: center;
         cursor: pointer;
         font-size: 14px;
         font-weight: 700;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
         border: 1px solid #eadede;
@@ -172,6 +173,7 @@
         background: white;
         color: #7b5554;
         transition: 0.25s;
+        position: relative;
     }
 
     .time-slot:hover {
@@ -197,10 +199,37 @@
         transform: none;
     }
 
+    .peak-badge {
+        margin-top: 4px;
+        background: #fee2e2;
+        color: #b91c1c;
+        font-size: 10px;
+        font-weight: 900;
+        padding: 2px 7px;
+        border-radius: 999px;
+        line-height: 1.4;
+    }
+
+    .time-slot.active .peak-badge {
+        background: white;
+        color: #b91c1c;
+    }
+
     .booking-warning {
         background: #fff4d6;
         color: #8a5a00;
         border: 1px solid #f3d58a;
+        padding: 12px 14px;
+        border-radius: 14px;
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 14px;
+    }
+
+    .fee-note {
+        background: #fff7f7;
+        color: #7b5554;
+        border: 1px solid #eadede;
         padding: 12px 14px;
         border-radius: 14px;
         font-size: 14px;
@@ -226,6 +255,29 @@
         border-color: var(--primary);
         box-shadow: 0 6px 20px rgba(123,85,84,0.15);
         background: rgba(123,85,84,0.03);
+    }
+
+    .price-line {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        color: #2f2323;
+    }
+
+    .price-line.extra {
+        color: #b91c1c;
+        font-weight: 700;
+    }
+
+    .price-total {
+        display: flex;
+        justify-content: space-between;
+        border-top: 1px dashed #d9b5b5;
+        padding-top: 12px;
+        margin-top: 12px;
+        font-size: 18px;
+        font-weight: 900;
+        color: #7b5554;
     }
 </style>
 
@@ -343,6 +395,34 @@
     let paymentMethod = "cod";
 
     const MIN_BOOKING_HOURS = 2;
+   const SERVICE_PRICE = Number("{{ $service->price }}");
+    const PEAK_HOUR_FEE = 50000;
+    const DISTRICT_FEE = 50000;
+
+    function formatCurrency(value) {
+        return Number(value).toLocaleString('vi-VN') + ' VNĐ';
+    }
+
+    function isPeakHour(time) {
+        return (time >= '10:00' && time <= '13:00') ||
+               (time >= '18:00' && time <= '21:00');
+    }
+
+    function isDistrictFeeArea(districtName) {
+        return districtName && districtName.trim().startsWith('Huyện');
+    }
+
+    function getPeakHourFee() {
+        return isPeakHour(selectedTime) ? PEAK_HOUR_FEE : 0;
+    }
+
+    function getDistrictFee() {
+        return isDistrictFeeArea(selectedDistrictName) ? DISTRICT_FEE : 0;
+    }
+
+    function getTotalAmount() {
+        return SERVICE_PRICE + getPeakHourFee() + getDistrictFee();
+    }
 
     function startBooking() {
         currentStep = 1;
@@ -365,6 +445,10 @@
 
                 <div class="booking-warning">
                     Vui lòng đặt lịch trước thời gian thực hiện ít nhất ${MIN_BOOKING_HOURS} giờ.
+                </div>
+
+                <div class="fee-note">
+                    🔥 Giờ cao điểm từ 10:00 - 13:00 và 18:00 - 21:00 phụ thu thêm 50.000đ.
                 </div>
 
                 <h6 class="mb-3">Chọn ngày</h6>
@@ -409,14 +493,18 @@
                     <input type="text" class="form-control" value="Hà Nội" readonly>
                 </div>
 
-                <div class="mb-3">
+                <div class="mb-2">
                     <label class="form-label fw-bold">Quận/Huyện</label>
                     <select id="district" class="form-control" onchange="loadWardsByDistrict()">
                         <option value="">-- Chọn quận/huyện --</option>
                     </select>
                 </div>
 
-                <div class="mb-3">
+                <div id="districtFeeNotice" class="fee-note" style="display:none;">
+                    🚗 Khu vực huyện ngoại thành phụ thu thêm 50.000đ phí di chuyển.
+                </div>
+
+                <div class="mb-3 mt-3">
                     <label class="form-label fw-bold">Phường/Xã</label>
                     <select id="ward" class="form-control">
                         <option value="">-- Chọn phường/xã --</option>
@@ -449,6 +537,10 @@
         if (currentStep === 3) {
             title.textContent = "Bước 3/3: Xác nhận đặt lịch";
 
+            const peakFee = getPeakHourFee();
+            const districtFee = getDistrictFee();
+            const totalAmount = getTotalAmount();
+
             body.innerHTML = `
                 <h6 class="fw-bold mb-4">Xác nhận thông tin</h6>
 
@@ -459,10 +551,32 @@
                     <p><strong>Khách hàng:</strong> ${custName || 'Khách hàng'}</p>
                     <p><strong>SĐT:</strong> ${custPhone || '(Chưa nhập)'}</p>
                     <p><strong>Địa chỉ:</strong> ${custAddress || '(Chưa nhập)'}</p>
-                    <p class="mb-0">
-                        <strong>Tổng tiền:</strong>
-                        <span class="fw-bold text-primary">{{ number_format($service->price) }} VNĐ</span>
-                    </p>
+
+                    <hr>
+
+                    <div class="price-line">
+                        <span>Giá dịch vụ:</span>
+                        <strong>${formatCurrency(SERVICE_PRICE)}</strong>
+                    </div>
+
+                    ${peakFee > 0 ? `
+                        <div class="price-line extra">
+                            <span>Phụ thu giờ cao điểm:</span>
+                            <strong>+${formatCurrency(peakFee)}</strong>
+                        </div>
+                    ` : ''}
+
+                    ${districtFee > 0 ? `
+                        <div class="price-line extra">
+                            <span>Phụ thu di chuyển:</span>
+                            <strong>+${formatCurrency(districtFee)}</strong>
+                        </div>
+                    ` : ''}
+
+                    <div class="price-total">
+                        <span>Tổng tiền:</span>
+                        <span>${formatCurrency(totalAmount)}</span>
+                    </div>
                 </div>
 
                 <div class="mt-4">
@@ -691,7 +805,11 @@
         slots.forEach(time => {
             let div = document.createElement('div');
             div.className = 'time-slot';
-            div.textContent = time;
+
+            div.innerHTML = `
+                <span>${time}</span>
+                ${isPeakHour(time) ? '<span class="peak-badge">+50k</span>' : ''}
+            `;
 
             let isBlocked = false;
 
@@ -761,6 +879,8 @@
             } else if (wardSelect) {
                 wardSelect.innerHTML = '<option value="">-- Chọn phường/xã --</option>';
             }
+
+            updateDistrictFeeNotice();
         } catch (error) {
             districtSelect.innerHTML = '<option value="">Không tải được dữ liệu</option>';
             alert('Không tải được danh sách quận/huyện. Vui lòng kiểm tra kết nối mạng.');
@@ -774,6 +894,11 @@
         if (!districtSelect || !wardSelect) return;
 
         const districtCode = districtSelect.value;
+
+        selectedDistrictCode = districtCode;
+        selectedDistrictName = districtSelect.options[districtSelect.selectedIndex]?.text || '';
+
+        updateDistrictFeeNotice();
 
         wardSelect.innerHTML = '<option value="">Đang tải phường/xã...</option>';
 
@@ -800,6 +925,18 @@
         } catch (error) {
             wardSelect.innerHTML = '<option value="">Không tải được dữ liệu</option>';
             alert('Không tải được danh sách phường/xã.');
+        }
+    }
+
+    function updateDistrictFeeNotice() {
+        const notice = document.getElementById('districtFeeNotice');
+
+        if (!notice) return;
+
+        if (isDistrictFeeArea(selectedDistrictName)) {
+            notice.style.display = 'block';
+        } else {
+            notice.style.display = 'none';
         }
     }
 

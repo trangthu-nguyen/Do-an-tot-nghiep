@@ -14,6 +14,9 @@ use Carbon\Carbon;
 
 class PaymentController extends Controller
 {
+    private const PEAK_HOUR_FEE = 50000;
+    private const DISTRICT_FEE = 50000;
+
     public function index()
     {
         $bookings = Booking::where('customer_id', session('customer_id'))
@@ -104,7 +107,6 @@ class PaymentController extends Controller
         }
 
         $service = Service::findOrFail($request->service_id);
-        $totalAmount = $service->price;
 
         $bookingDateTime = Carbon::parse($request->booking_date . ' ' . $request->booking_time);
 
@@ -114,6 +116,11 @@ class PaymentController extends Controller
                 ->withInput()
                 ->with('error', 'Vui lòng đặt lịch trước thời gian thực hiện ít nhất 2 giờ!');
         }
+
+        $peakHourFee = $this->getPeakHourFee($request->booking_time);
+        $districtFee = $this->getDistrictFee($request->address);
+
+        $totalAmount = $service->price + $peakHourFee + $districtFee;
 
         $paymentMethod = strtolower(trim($request->payment_method));
         $isAutoPaid = in_array($paymentMethod, ['momo', 'vnpay']);
@@ -185,5 +192,24 @@ class PaymentController extends Controller
             ->firstOrFail();
 
         return view('customer.payments.wait', compact('booking'));
+    }
+
+    private function getPeakHourFee($bookingTime): int
+    {
+        $time = substr($bookingTime, 0, 5);
+
+        if (($time >= '10:00' && $time <= '13:00') ||
+            ($time >= '18:00' && $time <= '21:00')) {
+            return self::PEAK_HOUR_FEE;
+        }
+
+        return 0;
+    }
+
+    private function getDistrictFee($address): int
+    {
+        return str_contains($address, 'Huyện')
+            ? self::DISTRICT_FEE
+            : 0;
     }
 }

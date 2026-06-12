@@ -46,7 +46,40 @@ $staffAvatar = $booking->staff
     ? $staffPortraits[$booking->staff->staff_id % count($staffPortraits)]
     : asset('uploads/avatar/default-avatar.png');
 @endphp
+@php
+    // lấy giá dịch vụ gốc
+    $serviceFee = $booking->bookingDetails->sum('price');
 
+    $extraFee = 0;
+
+    // phụ phí giờ cao điểm
+    $peakHours = ['10:00:00','11:00:00','12:00:00','13:00:00',
+                  '18:00:00','19:00:00','20:00:00','21:00:00'];
+
+    if (in_array($booking->booking_time, $peakHours)) {
+        $extraFee += 50000;
+    }
+
+    // phụ phí ngoại thành (tự thêm huyện của bạn)
+    $outerDistricts = [
+        'Sóc Sơn',
+        'Chương Mỹ',
+        'Hoài Đức',
+        'Ba Vì',
+        'Mỹ Đức',
+        'Ứng Hòa',
+        'Phú Xuyên',
+        'Thanh Oai',
+        'Thường Tín'
+    ];
+
+    foreach ($outerDistricts as $district) {
+        if (str_contains($booking->address, $district)) {
+            $extraFee += 50000;
+            break;
+        }
+    }
+@endphp
 <style>
     .booking-page{color:#2f2323}
     .page-head{display:flex;justify-content:space-between;gap:18px;align-items:center;margin-bottom:24px}
@@ -286,14 +319,14 @@ $staffAvatar = $booking->staff
                 <div class="payment-title">Tóm tắt thanh toán</div>
 
                 <div class="pay-row">
-                    <span>Phí dịch vụ</span>
-                    <strong>{{ number_format($booking->total_amount) }}đ</strong>
-                </div>
+    <span>Phí dịch vụ</span>
+    <strong>{{ number_format($serviceFee) }}đ</strong>
+</div>
 
-                <div class="pay-row">
-                    <span>Phụ phí</span>
-                    <strong>0đ</strong>
-                </div>
+<div class="pay-row">
+    <span>Phụ phí</span>
+    <strong>{{ number_format($extraFee) }}đ</strong>
+</div>
 
                 <div class="pay-row">
                     <span>Giảm giá</span>
@@ -302,7 +335,7 @@ $staffAvatar = $booking->staff
 
                 <div class="pay-total">
                     <span>Tổng cộng</span>
-                    <span>{{ number_format($booking->total_amount) }}đ</span>
+                    <span>{{ number_format($serviceFee + $extraFee) }}đ</span>
                 </div>
 
                 <div class="mt-4 p-3" style="background:rgba(255,255,255,.08);border-radius:18px;">

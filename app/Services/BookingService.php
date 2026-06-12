@@ -21,14 +21,21 @@ class BookingService
     const STATUS_DONE = 3;
     const STATUS_CANCELLED = 4;
 
+    private const PEAK_HOUR_FEE = 50000;
+    private const DISTRICT_FEE = 50000;
+
     public function createBookingSingleService(array $data, $customerId): Booking
     {
         return DB::transaction(function () use ($data, $customerId) {
             $service = Service::where('service_id', $data['service_id'])->firstOrFail();
 
             $this->checkBookingTimeAllowed($data['booking_date'], $data['booking_time']);
-
             $this->checkSlotAvailable($data['booking_date'], $data['booking_time']);
+
+            $peakHourFee = $this->getPeakHourFee($data['booking_time']);
+            $districtFee = $this->getDistrictFee($data['address'] ?? '');
+
+            $totalAmount = $service->price + $peakHourFee + $districtFee;
 
             $booking = Booking::create([
                 'customer_id' => $customerId,
@@ -36,7 +43,7 @@ class BookingService
                 'booking_time' => $data['booking_time'],
                 'address' => $data['address'] ?? '',
                 'note' => $data['note'] ?? null,
-                'total_amount' => $service->price,
+                'total_amount' => $totalAmount,
                 'status' => self::STATUS_PENDING,
             ]);
 
@@ -48,7 +55,7 @@ class BookingService
 
             $this->createPayment(
                 $booking,
-                $service->price,
+                $totalAmount,
                 $data['payment_method'] ?? 'cod'
             );
 
@@ -183,6 +190,25 @@ class BookingService
             'payment_status' => $isAutoPaid ? 'paid' : 'pending',
             'payment_date' => now(),
         ]);
+    }
+
+    private function getPeakHourFee($bookingTime): int
+    {
+        $time = substr($bookingTime, 0, 5);
+
+        if (($time >= '10:00' && $time <= '13:00') ||
+            ($time >= '18:00' && $time <= '21:00')) {
+            return self::PEAK_HOUR_FEE;
+        }
+
+        return 0;
+    }
+
+    private function getDistrictFee($address): int
+    {
+        return str_contains($address, 'Huyện')
+            ? self::DISTRICT_FEE
+            : 0;
     }
 
     private function sendNewBookingNotifications(Booking $booking, Service $service, $customerId): void
