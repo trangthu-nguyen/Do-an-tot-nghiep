@@ -409,8 +409,12 @@
     }
 
     function isDistrictFeeArea(districtName) {
-        return districtName && districtName.trim().startsWith('Huyện');
-    }
+    return districtName &&
+        (
+            districtName.trim().startsWith('Huyện') ||
+            districtName.trim().startsWith('Thị xã')
+        );
+}
 
     function getPeakHourFee() {
         return isPeakHour(selectedTime) ? PEAK_HOUR_FEE : 0;
@@ -501,7 +505,7 @@
                 </div>
 
                 <div id="districtFeeNotice" class="fee-note" style="display:none;">
-                    🚗 Khu vực huyện ngoại thành phụ thu thêm 50.000đ phí di chuyển.
+                    🚗 Khu vực Huyện/Thị xã ngoại thành phụ thu thêm 50.000đ phí di chuyển.
                 </div>
 
                 <div class="mb-3 mt-3">
@@ -950,6 +954,165 @@
         }
     }
 </script>
+{{-- Đánh giá khách hàng --}}
+<div class="container pb-5">
+
+    <div class="service-info-box">
+
+        <div class="row align-items-center mb-5">
+
+            <div class="col-md-6">
+
+                <h3 style="
+                    font-weight:800;
+                    color:#5f3d3d;
+                    line-height:1.2;
+                ">
+                    Đánh giá từ khách hàng
+                </h3>
+
+                <div class="text-muted mt-2">
+                    Dựa trên {{ $feedbacks->count() }} lượt đặt lịch thành công
+                </div>
+
+            </div>
+
+            <div class="col-md-6 text-md-end mt-4 mt-md-0">
+
+                <div style="
+                    display:inline-flex;
+                    align-items:center;
+                    gap:18px;
+                    background:#fff6f6;
+                    padding:18px 24px;
+                    border-radius:20px;
+                    border:1px solid #f1dddd;
+                ">
+
+                    <div style="
+                        font-size:42px;
+                        font-weight:800;
+                        color:#7b5554;
+                        line-height:1;
+                    ">
+                        {{ $avgRating ? number_format($avgRating,1) : '0.0' }}
+                    </div>
+
+                    <div>
+
+                        <div style="
+                            color:#8d6766;
+                            font-size:18px;
+                            letter-spacing:2px;
+                        ">
+                            ★★★★★
+                        </div>
+
+                        <div class="small text-muted">
+                            Tuyệt vời
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        @forelse($feedbacks as $feedback)
+
+            <div class="mb-4 pb-4" style="border-bottom:1px solid #f2e7e7;">
+
+                <div class="d-flex">
+
+                    <div style="
+                        width:50px;
+                        height:50px;
+                        border-radius:50%;
+                        background:#7b5554;
+                        color:white;
+                        font-weight:700;
+                        display:flex;
+                        align-items:center;
+                        justify-content:center;
+                        font-size:18px;
+                        margin-right:16px;
+                    ">
+                        {{ strtoupper(substr($feedback->customer->full_name,0,1)) }}
+                    </div>
+
+                    <div class="flex-grow-1">
+
+                        <div class="d-flex justify-content-between">
+
+                            <div>
+
+                                <div style="
+                                    font-weight:700;
+                                    color:#2f2323;
+                                ">
+                                    {{ $feedback->customer->full_name }}
+                                </div>
+
+                                <div class="small text-muted">
+                                    {{ \Carbon\Carbon::parse($feedback->created_at)->diffForHumans() }}
+                                </div>
+
+                            </div>
+
+                            <div style="
+                                color:#8d6766;
+                                font-size:18px;
+                            ">
+
+                                @for($i=1;$i<=5;$i++)
+                                    @if($i <= $feedback->rating)
+                                        ★
+                                    @else
+                                        ☆
+                                    @endif
+                                @endfor
+
+                            </div>
+
+                        </div>
+
+                        <div style="
+                            margin-top:14px;
+                            color:#7d7272;
+                            line-height:1.9;
+                            font-style:italic;
+                        ">
+                            "{{ $feedback->comment }}"
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        @empty
+
+            <div style="
+                background:#fff8f8;
+                border:1px solid #f1dddd;
+                border-radius:20px;
+                padding:30px;
+                text-align:center;
+                color:#7b5554;
+                font-weight:700;
+            ">
+                Chưa có đánh giá nào cho dịch vụ này.
+            </div>
+
+        @endforelse
+
+    </div>
+
+</div>
 
 @endif
 

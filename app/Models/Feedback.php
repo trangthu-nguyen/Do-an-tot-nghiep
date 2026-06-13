@@ -29,4 +29,17 @@ class Feedback extends Model
     {
         return $this->belongsTo(Booking::class, 'booking_id', 'booking_id');
     }
+
+    // Các dịch vụ nằm trong booking đã được đánh giá
+    public function services()
+    {
+        return $this->belongsToMany(
+            Service::class,
+            'booking_details',
+            'booking_id',
+            'service_id',
+            'booking_id',
+            'service_id'
+        );
+    }
 }

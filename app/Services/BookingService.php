@@ -30,7 +30,9 @@ class BookingService
             $service = Service::where('service_id', $data['service_id'])->firstOrFail();
 
             $this->checkBookingTimeAllowed($data['booking_date'], $data['booking_time']);
-            $this->checkSlotAvailable($data['booking_date'], $data['booking_time']);
+
+
+// $this->checkSlotAvailable($data['booking_date'], $data['booking_time']);
 
             $peakHourFee = $this->getPeakHourFee($data['booking_time']);
             $districtFee = $this->getDistrictFee($data['address'] ?? '');
@@ -46,6 +48,7 @@ class BookingService
                 'total_amount' => $totalAmount,
                 'status' => self::STATUS_PENDING,
             ]);
+            
 
             BookingDetail::create([
                 'booking_id' => $booking->booking_id,
@@ -167,17 +170,16 @@ class BookingService
     }
 
     private function checkSlotAvailable($bookingDate, $bookingTime): void
-    {
-        $exists = Booking::where('booking_date', $bookingDate)
-            ->where('booking_time', $bookingTime)
-            ->where('status', '!=', self::STATUS_CANCELLED)
-            ->exists();
+{
+    $exists = Booking::where('booking_date', $bookingDate)
+        ->where('booking_time', $bookingTime)
+        ->where('status', '!=', self::STATUS_CANCELLED)
+        ->exists();
 
-        if ($exists) {
-            throw new Exception('Khung giờ này đã có người đặt. Vui lòng chọn giờ khác!');
-        }
+    if ($exists) {
+        throw new Exception('Khung giờ này đã có người đặt. Vui lòng chọn giờ khác!');
     }
-
+}
     private function createPayment(Booking $booking, $amount, string $paymentMethod): void
     {
         $paymentMethod = strtolower(trim($paymentMethod));

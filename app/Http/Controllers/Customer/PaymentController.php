@@ -91,6 +91,7 @@ class PaymentController extends Controller
 
     public function init(Request $request)
     {
+        
         $request->validate([
             'service_id' => 'required',
             'booking_date' => 'required',
@@ -175,13 +176,11 @@ class PaymentController extends Controller
             ]);
         }
 
-        if ($isAutoPaid) {
-            return redirect()->route('customer.bookings.index')
-                ->with('success', 'Đặt lịch và thanh toán thành công!');
-        }
+        // SỬA DUY NHẤT Ở ĐÂY:
+        // tất cả momo, vnpay, bank đều chuyển sang trang QR/payment wait
 
         return redirect()->route('customer.payments.wait', $booking->booking_id)
-            ->with('success', 'Đặt lịch thành công, vui lòng chờ admin xác nhận thanh toán!');
+            ->with('success', 'Vui lòng thực hiện thanh toán trong 15 phút!');
     }
 
     public function wait($booking_id)
@@ -207,9 +206,14 @@ class PaymentController extends Controller
     }
 
     private function getDistrictFee($address): int
-    {
-        return str_contains($address, 'Huyện')
-            ? self::DISTRICT_FEE
-            : 0;
+{
+    if (
+        str_contains($address, 'Huyện') ||
+        str_contains($address, 'Thị xã')
+    ) {
+        return self::DISTRICT_FEE;
     }
+
+    return 0;
+}
 }

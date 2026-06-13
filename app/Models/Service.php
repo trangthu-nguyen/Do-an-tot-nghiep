@@ -26,6 +26,20 @@ class Service extends Model
 
     public function bookingDetails()
     {
-        return $this->hasMany(BookingDetail::class, 'service_id', 'service_id');
+        return $this->hasMany(
+            BookingDetail::class,
+            'service_id',
+            'service_id'
+        );
+    }
+
+    // Các đánh giá đã được duyệt của dịch vụ
+    public function feedbacks()
+    {
+        return Feedback::where('status', 1)
+            ->where('is_hidden', 0)
+            ->whereHas('booking.bookingDetails', function ($query) {
+                $query->where('service_id', $this->service_id);
+            });
     }
 }

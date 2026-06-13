@@ -69,28 +69,28 @@ class BookingController extends Controller
     }
 
     public function store(StoreBookingRequest $request)
-    {
-        try {
-            if (!session('customer_id')) {
-                return redirect()
-                    ->route('customer.login')
-                    ->with('error', 'Bạn cần đăng nhập để đặt lịch!');
-            }
-
-            $this->bookingService->createBookingSingleService(
-                $request->validated(),
-                session('customer_id')
-            );
-
+{
+    try {
+        if (!session('customer_id')) {
             return redirect()
-                ->route('customer.bookings.index')
-                ->with('success', 'Đặt lịch thành công!');
-        } catch (Exception $e) {
-            return back()
-                ->withInput()
-                ->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
+                ->route('customer.login')
+                ->with('error', 'Bạn cần đăng nhập để đặt lịch!');
         }
+
+        $this->bookingService->createBookingSingleService(
+            $request->validated(),
+            session('customer_id')
+        );
+
+        return redirect()
+            ->route('customer.bookings.index')
+            ->with('success', 'Đặt lịch thành công!');
+    } catch (Exception $e) {
+        return back()
+            ->withInput()
+            ->with('error', 'Có lỗi xảy ra: ' . $e->getMessage());
     }
+}
 
     public function cancel($id)
     {

@@ -5,39 +5,278 @@
 @section('content')
 
 <style>
-    .bk-top,.bk-card,.bk-info{background:white;border:1px solid #f0e4e4;border-radius:22px;box-shadow:0 12px 32px rgba(123,85,84,.06)}
-    .bk-top{padding:24px;margin-bottom:20px;display:flex;justify-content:space-between;gap:18px;align-items:center}
-    .bk-label{font-size:12px;font-weight:900;color:#9b8f8f}
-    .bk-heading{font-size:30px;font-weight:900;color:#2f2323;margin:6px 0}
-    .bk-sub{color:#7d7272;font-size:14px;margin:0}
-    .btn-bk{background:#7b5554;color:white;border-radius:14px;padding:11px 16px;text-decoration:none;font-weight:800;border:0}
-    .btn-bk:hover{background:#684847;color:white}
-    .stats{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:20px}
-    .stat{padding:20px}
-    .stat-num{font-size:28px;font-weight:900;color:#7b5554}
-    .stat-note{font-size:12px;color:#9b8f8f;font-weight:700}
-    .filter-box{padding:16px 20px;margin-bottom:20px}
-    .filter-form{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    .filter-form input,.filter-form select{border-radius:14px;border:1px solid #eadede;padding:10px 14px;min-width:180px}
-    .filter-form input[name="keyword"]{min-width:280px}
-    .btn-filter{background:#7b5554;color:white;border:0;border-radius:14px;padding:10px 16px;font-weight:800}
-    .btn-reset{background:#f4eeee;color:#7b5554;border-radius:14px;padding:10px 16px;font-weight:800;text-decoration:none}
-    .bk-layout{display:grid;grid-template-columns:1fr 280px;gap:20px}
-    .table-title{padding:20px 24px;border-bottom:1px solid #f1e7e7;font-size:20px;font-weight:900;color:#2f2323}
-    .table th{font-size:12px;text-transform:uppercase;color:#8b8080;padding:15px 16px}
-    .table td{padding:16px;vertical-align:middle;border-bottom:1px solid #f7eeee}
-    .customer-name,.staff-name{font-weight:900;color:#2f2323}
-    .small-muted{font-size:12px;color:#8d8181}
-    .service-pill{display:inline-block;background:#f4eeee;color:#7b5554;padding:6px 10px;border-radius:999px;font-size:12px;font-weight:800;margin:2px}
-    .status{padding:6px 12px;border-radius:999px;font-size:12px;font-weight:900}
-    .s0{background:#fef3c7;color:#b45309;}.s1{background:#dbeafe;color:#1d4ed8;}.s2{background:#ede9fe;color:#7c3aed;}.s3{background:#dcfce7;color:#15803d;}.s4{background:#fee2e2;color:#b91c1c;}
-    .action-btn{border:0;background:transparent;color:#7b5554;font-size:17px;text-decoration:none}
-    .side-box{padding:20px;margin-bottom:18px}
-    .staff-row{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f1e7e7;padding:10px 0}
-    .avatar{width:34px;height:34px;border-radius:50%;object-fit:cover;margin-right:8px}
-    @media(max-width:991px){.bk-top{flex-direction:column;align-items:flex-start}.stats,.bk-layout{grid-template-columns:1fr}.filter-form input,.filter-form select{width:100%;min-width:100%}}
-</style>
+    .bk-top,
+    .bk-card,
+    .bk-info{
+        background:white;
+        border:1px solid #f0e4e4;
+        border-radius:22px;
+        box-shadow:0 12px 32px rgba(123,85,84,.06);
+    }
 
+    .bk-top{
+        padding:24px;
+        margin-bottom:20px;
+        display:flex;
+        justify-content:space-between;
+        gap:18px;
+        align-items:center;
+    }
+
+    .bk-label{
+        font-size:13px;
+        font-weight:700;
+        color:#9b8f8f;
+        margin-bottom:8px;
+    }
+
+    .bk-heading{
+        font-size:30px;
+        font-weight:900;
+        color:#2f2323;
+        margin:6px 0;
+    }
+
+    .bk-sub{
+        color:#7d7272;
+        font-size:14px;
+        margin:0;
+    }
+
+    .btn-bk{
+        background:#7b5554;
+        color:white;
+        border-radius:14px;
+        padding:11px 16px;
+        text-decoration:none;
+        font-weight:800;
+        border:0;
+    }
+
+    .btn-bk:hover{
+        background:#684847;
+        color:white;
+    }
+
+    /* ===== 4 ô thống kê ===== */
+    .stats{
+        display:grid;
+        grid-template-columns:repeat(4,1fr);
+        gap:20px;
+        margin-bottom:24px;
+    }
+
+    .stat{
+        padding:24px;
+        min-height:125px;
+        display:flex;
+        flex-direction:column;
+        justify-content:center;
+        transition:.3s;
+    }
+
+    .stat:hover{
+        transform:translateY(-4px);
+    }
+
+    .stat-num{
+        font-size:38px;
+        font-weight:900;
+        color:#7b5554;
+        line-height:1;
+        margin-bottom:10px;
+    }
+
+    .stat-note{
+        font-size:13px;
+        color:#9b8f8f;
+        font-weight:600;
+    }
+
+    /* ===== Filter ===== */
+    .filter-box{
+        padding:16px 20px;
+        margin-bottom:20px;
+    }
+
+    .filter-form{
+        display:flex;
+        gap:10px;
+        flex-wrap:wrap;
+        align-items:center;
+    }
+
+    .filter-form input,
+    .filter-form select{
+        border-radius:14px;
+        border:1px solid #eadede;
+        padding:10px 14px;
+        min-width:180px;
+    }
+
+    .filter-form input[name="keyword"]{
+        min-width:280px;
+    }
+
+    .btn-filter{
+        background:#7b5554;
+        color:white;
+        border:0;
+        border-radius:14px;
+        padding:10px 16px;
+        font-weight:800;
+    }
+
+    .btn-reset{
+        background:#f4eeee;
+        color:#7b5554;
+        border-radius:14px;
+        padding:10px 16px;
+        font-weight:800;
+        text-decoration:none;
+    }
+
+    /* ===== Layout ===== */
+    .bk-layout{
+        display:grid;
+        grid-template-columns:1fr 300px;
+        gap:20px;
+    }
+
+    .table-title{
+        padding:20px 24px;
+        border-bottom:1px solid #f1e7e7;
+        font-size:20px;
+        font-weight:900;
+        color:#2f2323;
+    }
+
+    .table th{
+        font-size:12px;
+        text-transform:uppercase;
+        color:#8b8080;
+        padding:15px 16px;
+    }
+
+    .table td{
+        padding:16px;
+        vertical-align:middle;
+        border-bottom:1px solid #f7eeee;
+    }
+
+    .customer-name,
+    .staff-name{
+        font-weight:900;
+        color:#2f2323;
+    }
+
+    .small-muted{
+        font-size:12px;
+        color:#8d8181;
+    }
+
+    .service-pill{
+        display:inline-block;
+        background:#f4eeee;
+        color:#7b5554;
+        padding:6px 10px;
+        border-radius:999px;
+        font-size:12px;
+        font-weight:800;
+        margin:2px;
+    }
+
+    .status{
+        padding:6px 12px;
+        border-radius:999px;
+        font-size:12px;
+        font-weight:900;
+    }
+
+    .s0{
+        background:#fef3c7;
+        color:#b45309;
+    }
+
+    .s1{
+        background:#dbeafe;
+        color:#1d4ed8;
+    }
+
+    .s2{
+        background:#ede9fe;
+        color:#7c3aed;
+    }
+
+    .s3{
+        background:#dcfce7;
+        color:#15803d;
+    }
+
+    .s4{
+        background:#fee2e2;
+        color:#b91c1c;
+    }
+
+    .action-btn{
+        border:0;
+        background:transparent;
+        color:#7b5554;
+        font-size:17px;
+        text-decoration:none;
+    }
+
+    .side-box{
+        padding:20px;
+        margin-bottom:18px;
+    }
+
+    .staff-row{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        border-bottom:1px solid #f1e7e7;
+        padding:10px 0;
+    }
+
+    .avatar{
+        width:34px;
+        height:34px;
+        border-radius:50%;
+        object-fit:cover;
+        margin-right:8px;
+    }
+
+    /* ===== Responsive ===== */
+
+    @media (max-width:1200px){
+        .stats{
+            grid-template-columns:repeat(2,1fr);
+        }
+    }
+
+    @media (max-width:991px){
+
+        .bk-top{
+            flex-direction:column;
+            align-items:flex-start;
+        }
+
+        .bk-layout{
+            grid-template-columns:1fr;
+        }
+
+        .stats{
+            grid-template-columns:1fr;
+        }
+
+        .filter-form input,
+        .filter-form select{
+            width:100%;
+            min-width:100%;
+        }
+    }
+</style>
 <div class="bk-top">
     <div>
         <h1 class="bk-heading">Lịch đặt dịch vụ</h1>
@@ -70,11 +309,7 @@
         <div class="stat-note">Đã bị hủy</div>
     </div>
 
-    <div class="bk-card stat">
-        <div class="bk-label">Doanh thu hoàn thành</div>
-        <div class="stat-num">{{ number_format($totalRevenue) }}đ</div>
-        <div class="stat-note">Từ lịch hoàn thành</div>
-    </div>
+    
 </div>
 
 <div class="bk-card filter-box">

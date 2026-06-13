@@ -60,25 +60,40 @@ $staffAvatar = $booking->staff
         $extraFee += 50000;
     }
 
-    // phụ phí ngoại thành (tự thêm huyện của bạn)
-    $outerDistricts = [
-        'Sóc Sơn',
-        'Chương Mỹ',
-        'Hoài Đức',
-        'Ba Vì',
-        'Mỹ Đức',
-        'Ứng Hòa',
-        'Phú Xuyên',
-        'Thanh Oai',
-        'Thường Tín'
-    ];
+    // phụ phí ngoại thành
+$outerDistricts = [
+    'Sóc Sơn',
+    'Chương Mỹ',
+    'Hoài Đức',
+    'Ba Vì',
+    'Mỹ Đức',
+    'Ứng Hòa',
+    'Phú Xuyên',
+    'Thanh Oai',
+    'Thường Tín',
+];
 
-    foreach ($outerDistricts as $district) {
-        if (str_contains($booking->address, $district)) {
-            $extraFee += 50000;
-            break;
-        }
+$isOuterArea = false;
+
+// check các huyện có sẵn
+foreach ($outerDistricts as $district) {
+    if (str_contains($booking->address, $district)) {
+        $isOuterArea = true;
+        break;
     }
+}
+
+// check thêm nếu địa chỉ chứa chữ Huyện hoặc Thị xã
+if (
+    str_contains($booking->address, 'Huyện') ||
+    str_contains($booking->address, 'Thị xã')
+) {
+    $isOuterArea = true;
+}
+
+if ($isOuterArea) {
+    $extraFee += 50000;
+}
 @endphp
 <style>
     .booking-page{color:#2f2323}

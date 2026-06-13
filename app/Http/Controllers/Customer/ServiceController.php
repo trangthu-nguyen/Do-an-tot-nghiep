@@ -43,12 +43,14 @@ class ServiceController extends Controller
         $service = Service::where('status', 1)->findOrFail($id);
 
     // Lấy danh sách feedback của dịch vụ này thông qua booking
-    $feedbacks = \App\Models\Feedback::with('customer')
-        ->whereHas('booking.bookingDetails', function($q) use ($id) {
-            $q->where('service_id', $id);
-        })
-        ->orderBy('feedback_id', 'desc')
-        ->get();
+   $feedbacks = \App\Models\Feedback::with('customer')
+    ->where('status', 1)        // admin đã duyệt
+    ->where('is_hidden', 0)     // không bị ẩn
+    ->whereHas('booking.bookingDetails', function ($q) use ($id) {
+        $q->where('service_id', $id);
+    })
+    ->orderBy('feedback_id', 'desc')
+    ->get();
 
     // Tính rating trung bình
     $avgRating = $feedbacks->avg('rating');

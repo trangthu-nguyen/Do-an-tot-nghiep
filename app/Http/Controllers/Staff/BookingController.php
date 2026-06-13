@@ -110,17 +110,34 @@ class BookingController extends Controller
             ->with('success', 'Cập nhật trạng thái thành công!');
     }
 
-    public function jobMarket()
-    {
-        $bookings = Booking::whereNull('staff_id')
-            ->where('status', 0)
-            ->with(['customer', 'bookingDetails.service'])
-            ->orderBy('booking_date', 'asc')
-            ->orderBy('booking_time', 'asc')
-            ->get();
+   public function jobMarket()
+{
+    $staffId = session('staff_id');
 
-        return view('staff.bookings.job_market', compact('bookings'));
+    // các lịch staff hiện tại đã nhận
+    $myBookings = Booking::where('staff_id', $staffId)
+        ->whereIn('status', [1, 2])   // đã xác nhận hoặc đang làm
+        ->get(['booking_date', 'booking_time']);
+
+    $query = Booking::whereNull('staff_id')
+        ->where('status', 0)
+        ->with(['customer', 'bookingDetails.service']);
+
+    // loại bỏ các lịch trùng giờ staff đã có
+    foreach ($myBookings as $myBooking) {
+        $query->where(function ($q) use ($myBooking) {
+            $q->where('booking_date', '!=', $myBooking->booking_date)
+              ->orWhere('booking_time', '!=', $myBooking->booking_time);
+        });
     }
+
+    $bookings = $query
+        ->orderBy('booking_date', 'asc')
+        ->orderBy('booking_time', 'asc')
+        ->get();
+
+    return view('staff.bookings.job_market', compact('bookings'));
+}
 
     public function acceptBooking($id)
     {
