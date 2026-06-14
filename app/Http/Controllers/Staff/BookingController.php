@@ -111,41 +111,79 @@ class BookingController extends Controller
     }
 
    public function jobMarket()
-{
-    $staffId = session('staff_id');
+    {
+        $staffId = session('staff_id');
 
-    // các lịch staff hiện tại đã nhận
-    $myBookings = Booking::where('staff_id', $staffId)
-        ->whereIn('status', [1, 2])   // đã xác nhận hoặc đang làm
-        ->get(['booking_date', 'booking_time']);
+        // Các ngày nhân viên đánh dấu Bận/Nghỉ
+        $busyDates = StaffSchedule::where('staff_id', $staffId)
+            ->where('status', 'busy')
+            ->pluck('work_date')
+            ->toArray();
 
-    $query = Booking::whereNull('staff_id')
-        ->where('status', 0)
-        ->with(['customer', 'bookingDetails.service']);
+        // Các booking mà nhân viên đang nhận
+        $myBookings = Booking::where('staff_id', $staffId)
+            ->whereIn('status', [1, 2])
+            ->get(['booking_date', 'booking_time']);
 
-    // loại bỏ các lịch trùng giờ staff đã có
-    foreach ($myBookings as $myBooking) {
-        $query->where(function ($q) use ($myBooking) {
-            $q->where('booking_date', '!=', $myBooking->booking_date)
-              ->orWhere('booking_time', '!=', $myBooking->booking_time);
-        });
+        // Danh sách booking chưa có người nhận
+        $query = Booking::whereNull('staff_id')
+            ->where('status', 0)
+            ->with(['customer', 'bookingDetails.service']);
+
+        
+
+        // Loại bỏ booking trùng giờ với lịch đang làm
+        foreach ($myBookings as $myBooking) {
+            $query->where(function ($q) use ($myBooking) {
+                $q->where('booking_date', '!=', $myBooking->booking_date)
+                ->orWhere('booking_time', '!=', $myBooking->booking_time);
+            });
+        }
+
+        $bookings = $query
+            ->orderBy('booking_date')
+            ->orderBy('booking_time')
+            ->get();
+
+        return view(
+            'staff.bookings.job_market',
+            compact('bookings', 'busyDates')
+        );
     }
-
-    $bookings = $query
-        ->orderBy('booking_date', 'asc')
-        ->orderBy('booking_time', 'asc')
-        ->get();
-
-    return view('staff.bookings.job_market', compact('bookings'));
-}
 
     public function acceptBooking($id)
     {
         $booking = Booking::with(['customer'])->findOrFail($id);
-        $staff = Staff::find(session('staff_id'));
+        $staffId = session('staff_id');
+        $staff = Staff::find($staffId);
+
+        // Kiểm tra ngày nghỉ
+        $isBusy = StaffSchedule::where('staff_id', $staffId)
+            ->where('work_date', $booking->booking_date)
+            ->where('status', 'busy')
+            ->exists();
+
+        if ($isBusy) {
+            return redirect()
+                ->route('staff.jobMarket')
+                ->with('error', 'Bạn đang đánh dấu Bận/Nghỉ vào ngày này.');
+        }
+
+        // Kiểm tra đã có booking cùng giờ chưa
+        $hasConflict = Booking::where('staff_id', $staffId)
+            ->whereIn('status', [1, 2])
+            ->where('booking_date', $booking->booking_date)
+            ->where('booking_time', $booking->booking_time)
+            ->exists();
+
+        if ($hasConflict) {
+            return redirect()
+                ->route('staff.jobMarket')
+                ->with('error', 'Bạn đã có lịch vào khung giờ này.');
+        }
 
         try {
-            $this->bookingService->acceptBookingByStaff($booking, session('staff_id'));
+            $this->bookingService->acceptBookingByStaff($booking, $staffId);
         } catch (Exception $e) {
             return redirect()
                 ->route('staff.jobMarket')
@@ -165,7 +203,9 @@ class BookingController extends Controller
             'user_type'  => 'admin',
             'user_id'    => 1,
             'title'      => 'Nhân viên đã nhận lịch',
-            'content'    => ($staff->full_name ?? 'Nhân viên') . ' đã nhận Booking #' . $booking->booking_id . '.',
+            'content'    => ($staff->full_name ?? 'Nhân viên') .
+                            ' đã nhận Booking #' .
+                            $booking->booking_id . '.',
             'is_read'    => 0,
             'created_at' => now()
         ]);
@@ -174,7 +214,6 @@ class BookingController extends Controller
             ->route('staff.bookings.index')
             ->with('success', 'Bạn đã nhận lịch thành công!');
     }
-
     public function workHistory()
     {
         $staffId = session('staff_id');
@@ -209,11 +248,19 @@ class BookingController extends Controller
         'end_time'   => 'required',
     ]);
 
-    $staff = Staff::find(session('staff_id'));
+    $staffId = session('staff_id');
+    $staff = Staff::find($staffId);
 
+    // Nếu trước đó đăng ký là Bận/Nghỉ thì xóa trạng thái đó
+    StaffSchedule::where('staff_id', $staffId)
+        ->where('work_date', $request->work_date)
+        ->where('status', 'busy')
+        ->delete();
+
+    // Đăng ký ca
     StaffSchedule::updateOrCreate(
         [
-            'staff_id'   => session('staff_id'),
+            'staff_id'   => $staffId,
             'work_date'  => $request->work_date,
             'shift_name' => $request->shift_name,
         ],
@@ -221,52 +268,54 @@ class BookingController extends Controller
             'start_time' => $request->start_time,
             'end_time'   => $request->end_time,
             'status'     => 'available',
-            'note'       => $request->note,
-            'updated_at' => now()
+            'note'       => $request->note
         ]
     );
 
     Notification::create([
-        'user_type'  => 'admin',
-        'user_id'    => 1,
-        'title'      => 'Nhân viên đăng ký lịch làm',
-        'content'    => ($staff->full_name ?? 'Nhân viên') .
-                        ' đã đăng ký ' . $request->shift_name .
-                        ' ngày ' . \Carbon\Carbon::parse($request->work_date)->format('d/m/Y') .
-                        ' (' . $request->start_time . ' - ' . $request->end_time . ').',
-        'is_read'    => 0,
-        'created_at' => now()
+        'user_type' => 'admin',
+        'user_id'   => 1,
+        'title'     => 'Nhân viên đăng ký lịch làm',
+        'content'   => ($staff->full_name ?? 'Nhân viên')
+                        .' đã đăng ký '
+                        .$request->shift_name
+                        .' ngày '
+                        .\Carbon\Carbon::parse($request->work_date)->format('d/m/Y'),
+        'is_read'   => 0,
+        'created_at'=> now()
     ]);
 
-    return redirect()
-        ->back()
-        ->with('success', 'Đăng ký ca làm thành công!');
+    return back()->with('success', 'Đăng ký ca làm thành công!');
 }
     public function markBusy(Request $request)
-    {
-        $request->validate([
-            'work_date' => 'required|date',
-        ]);
+{
+    $request->validate([
+        'work_date' => 'required|date',
+    ]);
 
-        StaffSchedule::updateOrCreate(
-            [
-                'staff_id'  => session('staff_id'),
-                'work_date' => $request->work_date,
-            ],
-            [
-                'shift_name' => 'Nghỉ / Bận',
-                'start_time' => null,
-                'end_time'   => null,
-                'status'     => 'busy',
-                'note'       => $request->note ?? 'Nhân viên xin nghỉ hoặc bận ngày này.',
-                'updated_at' => now()
-            ]
-        );
+    $staffId = session('staff_id');
 
-        return redirect()
-            ->back()
-            ->with('success', 'Đã đánh dấu bận / xin nghỉ thành công!');
-    }
+    // Xoá toàn bộ ca đã đăng ký trong ngày
+    StaffSchedule::where('staff_id', $staffId)
+        ->where('work_date', $request->work_date)
+        ->delete();
+
+    // Tạo trạng thái Bận/Nghỉ cho ngày đó
+    StaffSchedule::create([
+        'staff_id'   => $staffId,
+        'work_date'  => $request->work_date,
+        'shift_name' => 'Nghỉ / Bận',
+        'start_time' => null,
+        'end_time'   => null,
+        'status'     => 'busy',
+        'note'       => $request->note ?? 'Nhân viên Bận/Nghỉ'
+    ]);
+
+    return back()->with(
+        'success',
+        'Đã đánh dấu Bận/Nghỉ.'
+    );
+}
 
     private function getStatusText($status)
     {

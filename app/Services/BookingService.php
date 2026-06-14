@@ -11,6 +11,7 @@ use App\Models\Service;
 use App\Models\Staff;
 use Carbon\Carbon;
 use Exception;
+use App\Models\StaffSchedule;
 use Illuminate\Support\Facades\DB;
 
 class BookingService
@@ -153,13 +154,36 @@ class BookingService
             throw new Exception('Chỉ lịch đang chờ xác nhận mới được nhận!');
         }
 
+        // Kiểm tra nhân viên có đánh dấu Bận/Nghỉ ngày này không
+        $isBusy = \App\Models\StaffSchedule::where('staff_id', $staffId)
+            ->where('work_date', $booking->booking_date)
+            ->where('status', 'busy')
+            ->exists();
+
+        if ($isBusy) {
+            throw new Exception('Bạn đang ở trạng thái Bận/Nghỉ vào ngày này.');
+        }
+
+        // Kiểm tra có booking khác cùng ngày cùng giờ hay không
+        $hasConflict = Booking::where('staff_id', $staffId)
+            ->whereIn('status', [
+                self::STATUS_CONFIRMED,
+                self::STATUS_DOING
+            ])
+            ->where('booking_date', $booking->booking_date)
+            ->where('booking_time', $booking->booking_time)
+            ->exists();
+
+        if ($hasConflict) {
+            throw new Exception('Bạn đã có lịch ở khung giờ này.');
+        }
+
         $booking->staff_id = $staffId;
         $booking->status = self::STATUS_CONFIRMED;
         $booking->save();
 
         return true;
     }
-
     private function checkBookingTimeAllowed($bookingDate, $bookingTime): void
     {
         $bookingDateTime = Carbon::parse($bookingDate . ' ' . $bookingTime);

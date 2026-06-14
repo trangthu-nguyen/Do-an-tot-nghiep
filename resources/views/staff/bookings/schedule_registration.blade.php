@@ -109,15 +109,29 @@
                          onclick="selectDate('{{ $dateKey }}', this)">
                         {{ $i }}
 
-                        @foreach($daySchedules as $schedule)
-                            @if($schedule->status == 'busy')
-                                <div class="shift-label busy-label">Bận / Nghỉ</div>
-                            @elseif($schedule->status == 'approved')
-                                <div class="shift-label approved-label">{{ $schedule->shift_name }}</div>
-                            @else
-                                <div class="shift-label">{{ $schedule->shift_name }}</div>
-                            @endif
-                        @endforeach
+                        @if($hasBusy)
+
+    <div class="shift-label busy-label">
+        Bận/Nghỉ
+    </div>
+
+@else
+
+    @foreach($daySchedules as $schedule)
+
+        @if($schedule->status == 'approved')
+            <div class="shift-label approved-label">
+                {{ $schedule->shift_name }}
+            </div>
+        @else
+            <div class="shift-label">
+                {{ $schedule->shift_name }}
+            </div>
+        @endif
+
+    @endforeach
+
+@endif
                     </div>
                 @endfor
             </div>

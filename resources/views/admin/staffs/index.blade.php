@@ -189,7 +189,7 @@
                     <thead>
                         <tr>
                             <th>Nhân viên</th>
-                            <th>Vị trí / kỹ năng</th>
+                            <th>Kỹ năng</th>
                             <th>Số điện thoại</th>
                             <th>Trạng thái</th>
                             <th width="130">Hành động</th>
@@ -320,37 +320,64 @@
                                     @endphp
 
                                     <td>
-                                        @if($daySchedules->count())
-    @foreach($daySchedules as $schedule)
-        <div class="mb-2">
-            <div class="shift-pill {{ scheduleClassName($schedule->status) }}">
-                {{ $schedule->status == 'busy' ? 'Nghỉ' : $schedule->shift_name }}
-            </div>
+                                    @if($daySchedules->count())
 
-            <div class="small-muted mt-1">
-                {{ $schedule->status == 'busy'
-                    ? 'Nghỉ / bận'
-                    : substr($schedule->start_time, 0, 5) . ' - ' . substr($schedule->end_time, 0, 5) }}
-            </div>
+                                    {{-- Nếu ngày này Bận/Nghỉ --}}
+                                    @if($daySchedules->where('status','busy')->count())
 
-            <div class="small-muted">
-                {{ scheduleStatusText($schedule->status) }}
-            </div>
+                                        <div class="mb-2">
+                                            <div class="shift-pill shift-busy">
+                                                Bận/Nghỉ
+                                            </div>
 
-            @if($schedule->status == 'available')
-                <form action="{{ route('admin.staffs.schedules.approve', $schedule->schedule_id) }}"
-                      method="POST">
-                    @csrf
-                    <button class="approve-mini">
-                        Duyệt
-                    </button>
-                </form>
-            @endif
-        </div>
-    @endforeach
-@else
-    <span class="shift-empty">OFF</span>
-@endif
+                                            
+
+                                            <div class="small-muted">
+                                                {{ scheduleStatusText('busy') }}
+                                            </div>
+                                        </div>
+
+                                    @else
+
+                                        @foreach($daySchedules as $schedule)
+
+                                            <div class="mb-2">
+
+                                                <div class="shift-pill {{ scheduleClassName($schedule->status) }}">
+                                                    {{ $schedule->shift_name }}
+                                                </div>
+
+                                                <div class="small-muted mt-1">
+                                                    {{ substr($schedule->start_time,0,5) }}
+                                                    -
+                                                    {{ substr($schedule->end_time,0,5) }}
+                                                </div>
+
+                                                <div class="small-muted">
+                                                    {{ scheduleStatusText($schedule->status) }}
+                                                </div>
+
+                                                @if($schedule->status == 'available')
+                                                    <form action="{{ route('admin.staffs.schedules.approve', $schedule->schedule_id) }}"
+                                                        method="POST">
+                                                        @csrf
+                                                        <button class="approve-mini">
+                                                            Duyệt
+                                                        </button>
+                                                    </form>
+                                                @endif
+
+                                            </div>
+
+                                        @endforeach
+
+                                    @endif
+
+                                @else
+
+                                    <span class="shift-empty">OFF</span>
+
+                                @endif
                                     </td>
                                 @endforeach
                             </tr>
@@ -368,7 +395,7 @@
             <div class="legend">
                 <span><i class="dot dot-approved"></i> Đã duyệt</span>
                 <span><i class="dot dot-pending"></i> Chờ duyệt</span>
-                <span><i class="dot dot-busy"></i> Nghỉ phép</span>
+                
             </div>
         </div>
     </section>

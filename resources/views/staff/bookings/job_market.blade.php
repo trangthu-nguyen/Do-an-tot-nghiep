@@ -49,14 +49,14 @@
         font-size:14px;
         font-weight:700;
         color:#5f5656;
-        box-shadow:0 10px 25px rgba(123,85,84,0.06);
         border:1px solid #f2e6e6;
+        box-shadow:0 10px 25px rgba(123,85,84,.06);
     }
 
     .filter-control:focus{
         outline:none;
         border-color:var(--accent);
-        box-shadow:0 0 0 4px rgba(235,186,185,0.28);
+        box-shadow:0 0 0 4px rgba(235,186,185,.28);
     }
 
     .request-count{
@@ -69,13 +69,13 @@
 
     .booking-grid{
         display:grid;
-        grid-template-columns:repeat(3, minmax(0, 1fr));
+        grid-template-columns:repeat(3,minmax(0,1fr));
         gap:24px;
     }
 
     @media(max-width:1200px){
         .booking-grid{
-            grid-template-columns:repeat(2, minmax(0, 1fr));
+            grid-template-columns:repeat(2,minmax(0,1fr));
         }
 
         .filter-bar{
@@ -98,26 +98,32 @@
     }
 
     .job-card{
-        background:white;
+        background:#fff;
         border:1px solid #f1e7e7;
         border-radius:22px;
         overflow:hidden;
-        box-shadow:0 14px 35px rgba(123,85,84,0.08);
-        transition:0.28s;
-        height:100%;
         display:flex;
         flex-direction:column;
+        height:100%;
+        transition:.3s;
+        box-shadow:0 14px 35px rgba(123,85,84,.08);
     }
 
-    .job-card:hover{
+    .job-card:not(.disabled-card):hover{
         transform:translateY(-5px);
-        box-shadow:0 22px 55px rgba(123,85,84,0.13);
+        box-shadow:0 22px 55px rgba(123,85,84,.13);
+    }
+
+    .disabled-card{
+        opacity:.55;
+        filter:grayscale(.35);
+        cursor:not-allowed;
     }
 
     .image-wrap{
         height:190px;
-        position:relative;
         overflow:hidden;
+        position:relative;
         background:#f8eeee;
     }
 
@@ -128,57 +134,61 @@
         display:block;
     }
 
+    .booking-id-badge{
+        position:absolute;
+        left:14px;
+        top:14px;
+        background:rgba(255,255,255,.95);
+        color:var(--primary);
+        padding:7px 12px;
+        border-radius:999px;
+        font-size:12px;
+        font-weight:900;
+        box-shadow:0 8px 20px rgba(123,85,84,.12);
+    }
+
     .price-badge{
         position:absolute;
         right:14px;
         top:14px;
-        background:rgba(255,255,255,0.92);
+        background:rgba(255,255,255,.95);
         color:var(--primary);
         padding:8px 13px;
         border-radius:999px;
         font-size:13px;
         font-weight:900;
-        box-shadow:0 8px 20px rgba(123,85,84,0.12);
+        box-shadow:0 8px 20px rgba(123,85,84,.12);
     }
 
     .status-badge{
         position:absolute;
         left:14px;
         bottom:14px;
-        background:rgba(123,85,84,0.88);
-        color:white;
+        background:rgba(123,85,84,.9);
+        color:#fff;
         padding:7px 12px;
         border-radius:999px;
         font-size:12px;
         font-weight:900;
     }
 
-    .booking-id-badge{
-        position:absolute;
-        left:14px;
-        top:14px;
-        background:rgba(255,255,255,0.94);
-        color:var(--primary);
-        padding:7px 12px;
-        border-radius:999px;
-        font-size:12px;
-        font-weight:900;
-        box-shadow:0 8px 20px rgba(123,85,84,0.12);
+    .status-disabled{
+        background:#9c9c9c;
     }
 
     .job-body{
         padding:20px;
-        flex:1;
         display:flex;
         flex-direction:column;
+        flex:1;
     }
 
     .service-name{
         font-size:22px;
         font-weight:900;
-        font-family:'Noto Serif', serif;
+        font-family:'Noto Serif',serif;
         color:var(--text);
-        line-height:1.25;
+        line-height:1.3;
         margin-bottom:8px;
     }
 
@@ -222,13 +232,13 @@
         align-items:center;
         gap:12px;
         padding-top:16px;
-        border-top:1px dashed rgba(123,85,84,0.15);
+        border-top:1px dashed rgba(123,85,84,.15);
     }
 
     .method-pill{
         padding:7px 10px;
         border-radius:999px;
-        background:rgba(235,186,185,0.22);
+        background:rgba(235,186,185,.22);
         color:var(--primary);
         font-size:11px;
         font-weight:900;
@@ -243,7 +253,7 @@
         border-radius:12px;
         font-size:13px;
         font-weight:900;
-        transition:0.25s;
+        transition:.25s;
         white-space:nowrap;
     }
 
@@ -252,15 +262,24 @@
         transform:translateY(-2px);
     }
 
+    .btn-disabled{
+        background:#bfbfbf !important;
+        color:#fff !important;
+        cursor:not-allowed !important;
+        pointer-events:none;
+        box-shadow:none;
+        transform:none !important;
+    }
+
     .empty-box{
-        background:white;
-        border:1px dashed rgba(235,186,185,0.9);
+        background:#fff;
+        border:1px dashed rgba(235,186,185,.9);
         border-radius:26px;
         padding:44px;
         text-align:center;
         color:var(--muted);
         font-weight:800;
-        box-shadow:0 14px 38px rgba(123,85,84,0.06);
+        box-shadow:0 14px 38px rgba(123,85,84,.06);
     }
 
     .empty-box i{
@@ -381,7 +400,10 @@
                 $bookingDate = \Carbon\Carbon::parse($booking->booking_date)->format('Y-m-d');
             @endphp
 
-            <div class="job-card"
+            @php
+                $isBusyDay = in_array($bookingDate, $busyDates);
+            @endphp
+            <div class="job-card {{ $isBusyDay ? 'disabled-card' : '' }}"
                  data-service="{{ strtolower($serviceNames) }}"
                  data-address="{{ strtolower($booking->address ?? '') }}"
                  data-date="{{ $bookingDate }}">
@@ -460,14 +482,29 @@
                             {{ $booking->payment->payment_method ?? 'COD' }}
                         </span>
 
-                        <form action="{{ route('staff.bookings.accept', $booking->booking_id) }}" method="POST">
-                            @csrf
-                            <button type="submit"
-                                    class="btn-accept"
-                                    onclick="return confirm('Bạn chắc chắn muốn nhận lịch này?')">
-                                Nhận lịch ngay
+                        @php
+                            $isBusyDate = in_array($booking->booking_date, $busyDates);
+                        @endphp
+
+                        @if($isBusyDate)
+
+                            <button class="btn-accept btn-disabled" disabled>
+                                Đang nghỉ
                             </button>
-                        </form>
+
+                        @else
+
+                            <form action="{{ route('staff.bookings.accept', $booking->booking_id) }}" method="POST">
+                                @csrf
+
+                                <button type="submit"
+                                        class="btn-accept"
+                                        onclick="return confirm('Bạn chắc chắn muốn nhận lịch này?')">
+                                    Nhận lịch ngay
+                                </button>
+                            </form>
+
+                        @endif
 
                     </div>
 
