@@ -179,7 +179,15 @@ class PaymentController extends Controller
         // SỬA DUY NHẤT Ở ĐÂY:
         // tất cả momo, vnpay, bank đều chuyển sang trang QR/payment wait
 
-        return redirect()->route('customer.payments.wait', $booking->booking_id)
+        if ($paymentMethod === 'cod') {
+            return redirect()
+                ->route('customer.bookings.index')
+                ->with('success', 'Đặt lịch thành công!');
+        }
+
+        // momo, vnpay...
+        return redirect()
+            ->route('customer.payments.wait', $booking->booking_id)
             ->with('success', 'Vui lòng thực hiện thanh toán trong 15 phút!');
     }
 

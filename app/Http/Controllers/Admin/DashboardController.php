@@ -16,6 +16,7 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $totalBookings = Booking::count();
+        $todayBookings = Booking::whereDate('booking_date', today())->count();
         $totalServices = Service::count();
         $totalCustomers = Customer::count();
         $totalStaff = Staff::count();
@@ -147,7 +148,8 @@ class DashboardController extends Controller
             'bookingStatus',
             'topStaffId',
             'topServices',
-            'maxServiceBookings'
+            'maxServiceBookings',
+            'todayBookings',
         ));
     }
 }

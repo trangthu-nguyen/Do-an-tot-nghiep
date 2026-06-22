@@ -232,7 +232,7 @@
             <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
             <div class="stat-label">Doanh thu hôm nay</div>
             <div class="stat-value">{{ number_format($totalRevenue ?? 0, 0, ',', '.') }}đ</div>
-            <div class="stat-up">+{{ $totalBookings ?? 0 }} lịch đặt</div>
+            <div class="stat-up">+{{ $todayBookings }} lịch đặt mới</div>
         </div>
     </div>
 

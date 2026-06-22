@@ -20,7 +20,63 @@
         font-size: 32px;
         color: #2f2323;
     }
+    /* FILTER */
+    .filter-box{
+        background:white;
+        border-radius:22px;
+        border:1px solid rgba(212,194,194,.7);
+        box-shadow:0 18px 45px rgba(123,85,84,.08);
+        padding:18px;
+        margin-bottom:25px;
+    }
 
+    .filter-form{
+        display:flex;
+        gap:12px;
+        align-items:center;
+        flex-wrap:wrap;
+    }
+
+    .filter-form input,
+    .filter-form select{
+        height:45px;
+        border:1px solid #eadede;
+        border-radius:14px;
+        padding:0 14px;
+        outline:none;
+        font-size:14px;
+    }
+
+    .filter-form input[name="keyword"]{
+        width:320px;
+    }
+
+    .filter-btn{
+        background:#7b5554;
+        color:white;
+        border:none;
+        border-radius:14px;
+        padding:0 18px;
+        height:45px;
+        font-weight:700;
+    }
+
+    .filter-btn:hover{
+        background:#6d4848;
+    }
+
+    .reset-btn{
+        background:#f4eeee;
+        color:#7b5554;
+        text-decoration:none;
+        border-radius:14px;
+        padding:11px 18px;
+        font-weight:700;
+    }
+
+    .reset-btn:hover{
+        background:#ece3e3;
+    }
     /* CARD BOOKING */
     .booking-card {
         background: white;
@@ -256,6 +312,37 @@
 @endif
 
 {{-- LIST BOOKINGS --}}
+<div class="filter-box">
+    <form method="GET" action="{{ route('customer.bookings.index') }}" class="filter-form">
+
+        <input type="text"
+               name="keyword"
+               value="{{ request('keyword') }}"
+               placeholder="Tìm mã booking hoặc tên dịch vụ">
+
+        <select name="status">
+            <option value="">Tất cả trạng thái</option>
+            <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>Chờ xác nhận</option>
+            <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>Đã xác nhận</option>
+            <option value="2" {{ request('status') === '2' ? 'selected' : '' }}>Đang thực hiện</option>
+            <option value="3" {{ request('status') === '3' ? 'selected' : '' }}>Hoàn thành</option>
+            <option value="4" {{ request('status') === '4' ? 'selected' : '' }}>Đã hủy</option>
+        </select>
+
+        <input type="date"
+               name="booking_date"
+               value="{{ request('booking_date') }}">
+
+        <button type="submit" class="filter-btn">
+            <i class="bi bi-search"></i> Tìm kiếm
+        </button>
+
+        <a href="{{ route('customer.bookings.index') }}" class="reset-btn">
+            Làm mới
+        </a>
+
+    </form>
+</div>
 @forelse($bookings as $booking)
 
     @php

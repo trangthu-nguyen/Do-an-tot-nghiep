@@ -19,10 +19,34 @@ class BookingController extends Controller
         $this->bookingService = $bookingService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $bookings = Booking::where('customer_id', session('customer_id'))
-            ->with(['bookingDetails.service', 'feedback', 'payment', 'staff'])
+        $query = Booking::where('customer_id', session('customer_id'))
+            ->with(['bookingDetails.service', 'feedback', 'payment', 'staff']);
+
+        // tìm theo mã booking hoặc tên dịch vụ
+        if ($request->filled('keyword')) {
+            $keyword = $request->keyword;
+
+            $query->where(function ($q) use ($keyword) {
+                $q->where('booking_id', 'like', '%' . $keyword . '%')
+                ->orWhereHas('bookingDetails.service', function ($serviceQuery) use ($keyword) {
+                        $serviceQuery->where('service_name', 'like', '%' . $keyword . '%');
+                });
+            });
+        }
+
+        // lọc trạng thái
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // lọc ngày đặt
+        if ($request->filled('booking_date')) {
+            $query->whereDate('booking_date', $request->booking_date);
+        }
+
+        $bookings = $query
             ->orderBy('booking_date', 'desc')
             ->orderBy('booking_time', 'desc')
             ->get();

@@ -346,7 +346,7 @@
 
     <div class="bk-card overflow-hidden">
         <div class="table-title">
-            Booking Details
+            Lịch Đặt Mới
             <div class="small-muted mt-1">
                 Hiển thị {{ $bookings->count() }} lịch đặt
             </div>
@@ -356,6 +356,7 @@
             <table class="table align-middle mb-0">
                 <thead>
                     <tr>
+                        <th class="text-center">STT</th>
                         <th>Booking</th>
                         <th>Khách hàng</th>
                         <th>Dịch vụ</th>
@@ -367,78 +368,116 @@
                 </thead>
 
                 <tbody>
-                    @forelse($bookings as $booking)
-                        @php
-                            $statusText = [
-                                0 => 'Chờ xác nhận',
-                                1 => 'Đã xác nhận',
-                                2 => 'Đang thực hiện',
-                                3 => 'Hoàn thành',
-                                4 => 'Đã hủy'
-                            ][$booking->status] ?? 'Unknown';
+                @forelse($bookings as $index => $booking)
 
-                            $statusClass = 's' . $booking->status;
-                        @endphp
+                    @php
+                        $statusText = [
+                            0 => 'Chờ xác nhận',
+                            1 => 'Đã xác nhận',
+                            2 => 'Đang thực hiện',
+                            3 => 'Hoàn thành',
+                            4 => 'Đã hủy'
+                        ][$booking->status] ?? 'Unknown';
 
-                        <tr>
-                            <td>
-                                <strong>#{{ $booking->booking_id }}</strong>
-                                <div class="small-muted">{{ $booking->payment->payment_method ?? 'cod' }}</div>
-                            </td>
+                        $statusClass = 's' . $booking->status;
+                    @endphp
 
-                            <td>
-                                <div class="customer-name">
-                                    {{ $booking->customer->full_name ?? 'Chưa có' }}
-                                </div>
-                                <div class="small-muted">
-                                    {{ $booking->customer->phone ?? 'Chưa có SĐT' }}
-                                </div>
-                            </td>
+                    <tr>
 
-                            <td>
-                                @foreach($booking->bookingDetails as $detail)
-                                    <span class="service-pill">
-                                        {{ $detail->service->service_name ?? 'N/A' }}
-                                    </span>
-                                @endforeach
-                            </td>
+                        {{-- STT --}}
+                        <td class="text-center" style="width:70px;">
+                            <span style="
+                                display:inline-block;
+                                min-width:32px;
+                                height:32px;
+                                line-height:32px;
+                                border-radius:50%;
+                                background:#f4eeee;
+                                color:#7b5554;
+                                font-weight:800;
+                                font-size:14px;
+                            ">
+                                {{ $index + 1 }}
+                            </span>
+                        </td>
 
-                            <td>
-                                @if($booking->staff)
-                                    <div class="staff-name">
-                                        {{ $booking->staff->full_name }}
-                                    </div>
-                                @else
-                                    <span class="text-danger small-muted">Chưa phân công</span>
-                                @endif
-                            </td>
+                        {{-- Booking --}}
+                        <td>
+                            <strong>#{{ $booking->booking_id }}</strong>
+                            <div class="small-muted">
+                                {{ $booking->payment->payment_method ?? 'cod' }}
+                            </div>
+                        </td>
 
-                            <td>
-                                <strong>{{ \Carbon\Carbon::parse($booking->booking_date)->format('d/m/Y') }}</strong>
-                                <div class="small-muted">{{ $booking->booking_time }}</div>
-                            </td>
+                        {{-- Customer --}}
+                        <td>
+                            <div class="customer-name">
+                                {{ $booking->customer->full_name ?? 'Chưa có' }}
+                            </div>
+                            <div class="small-muted">
+                                {{ $booking->customer->phone ?? 'Chưa có SĐT' }}
+                            </div>
+                        </td>
 
-                            <td>
-                                <span class="status {{ $statusClass }}">
-                                    {{ $statusText }}
+                        {{-- Service --}}
+                        <td>
+                            @foreach($booking->bookingDetails as $detail)
+                                <span class="service-pill">
+                                    {{ $detail->service->service_name ?? 'N/A' }}
                                 </span>
-                            </td>
+                            @endforeach
+                        </td>
 
-                            <td class="text-end">
-                                <a href="{{ route('admin.bookings.show', $booking->booking_id) }}"
-                                   class="action-btn"
-                                   title="Xem chi tiết">
-                                    <i class="bi bi-eye-fill"></i>
-                                </a>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="7" class="text-center text-muted py-5">
-                                Không tìm thấy booking phù hợp.
-                            </td>
-                        </tr>
-                    @endforelse
+                        {{-- Staff --}}
+                        <td>
+                            @if($booking->staff)
+                                <div class="staff-name">
+                                    {{ $booking->staff->full_name }}
+                                </div>
+                            @else
+                                <span class="text-danger small-muted">
+                                    Chưa phân công
+                                </span>
+                            @endif
+                        </td>
+
+                        {{-- Date --}}
+                        <td>
+                            <strong>
+                                {{ \Carbon\Carbon::parse($booking->booking_date)->format('d/m/Y') }}
+                            </strong>
+                            <div class="small-muted">
+                                {{ $booking->booking_time }}
+                            </div>
+                        </td>
+
+                        {{-- Status --}}
+                        <td>
+                            <span class="status {{ $statusClass }}">
+                                {{ $statusText }}
+                            </span>
+                        </td>
+
+                        {{-- Action --}}
+                        <td class="text-end">
+                            <a href="{{ route('admin.bookings.show', $booking->booking_id) }}"
+                            class="action-btn"
+                            title="Xem chi tiết">
+                                <i class="bi bi-eye-fill"></i>
+                            </a>
+                        </td>
+
+                    </tr>
+
+                @empty
+
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-5">
+                        Không tìm thấy booking phù hợp.
+                    </td>
+                </tr>
+
+                @endforelse
                 </tbody>
             </table>
         </div>
