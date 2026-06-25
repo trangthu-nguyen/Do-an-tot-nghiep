@@ -42,6 +42,8 @@
     .week-btn{width:34px;height:34px;border-radius:50%;border:1px solid var(--border);background:white;color:var(--primary)}
     .schedule-table{width:100%;border-collapse:separate;border-spacing:0}
     .schedule-table th{background:#fbf8f8;color:#8a7e7e;font-size:11px;text-transform:uppercase;padding:13px;border-bottom:1px solid #f2eeee}
+    .schedule-wrapper{max-height:550px;overflow-y:auto}
+    .schedule-table thead th{position: sticky;top: 0;background: white;z-index: 100;}
     .schedule-table td{padding:12px;border-bottom:1px solid #f4eeee;vertical-align:middle}
     .shift-pill{display:inline-block;border-radius:10px;padding:7px 11px;font-size:11px;font-weight:900}
     .shift-approved{background:#f8e9e9;color:#7b5554;border:1px solid #e8baba}
@@ -52,6 +54,11 @@
     .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#8a7e7e;font-weight:800;margin-top:14px}
     .dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:5px}
     .dot-approved{background:#7b5554}.dot-pending{background:#f59e0b}.dot-busy{background:#be123c}
+    .shift-morning{background:#fef3c7;color:#92400e}
+    .shift-afternoon{background:#dbeafe;color:#1d4ed8}
+    .shift-evening{background:#ede9fe;color:#6d28d9}
+    .schedule-table td:first-child,
+    .schedule-table th:first-child{position: sticky;left: 0;background: white;z-index: 50}
     @media(max-width:1100px){.staff-page{grid-template-columns:1fr}}
 </style>
 
@@ -184,7 +191,7 @@
                 <div class="small-muted">{{ $staffs->count() }} nhân viên</div>
             </div>
 
-            <div class="table-responsive">
+            <div class="table-responsive schedule-wrapper">
                 <table class="table mb-0 align-middle">
                     <thead>
                         <tr>
@@ -291,7 +298,7 @@
                 </div>
             </div>
 
-            <div class="table-responsive">
+            <div class="table-responsive schedule-wrapper">
                 <table class="schedule-table">
                     <thead>
                         <tr>
@@ -343,7 +350,21 @@
 
                                             <div class="mb-2">
 
-                                                <div class="shift-pill {{ scheduleClassName($schedule->status) }}">
+                                                @php
+                                                    $shiftClass = '';
+
+                                                    if(str_contains(strtolower($schedule->shift_name), 'sáng')){
+                                                        $shiftClass = 'shift-morning';
+                                                    }
+                                                    elseif(str_contains(strtolower($schedule->shift_name), 'chiều')){
+                                                        $shiftClass = 'shift-afternoon';
+                                                    }
+                                                    elseif(str_contains(strtolower($schedule->shift_name), 'tối')){
+                                                        $shiftClass = 'shift-evening';
+                                                    }
+                                                @endphp
+
+                                                <div class="shift-pill {{ $shiftClass }}">
                                                     {{ $schedule->shift_name }}
                                                 </div>
 

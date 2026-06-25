@@ -28,6 +28,7 @@
     .muted{font-size:12px;color:#8d8181}
     .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#f4eeee;color:#7b5554;font-size:11px;font-weight:900}
     .pill-vip{background:#fff4d6;color:#a16207}
+    .pill-loyal{background:#dbeafe;color:#2563eb}
     .profile-card{padding:28px;position:sticky;top:24px}
     .profile-avatar{width:96px;height:96px;border-radius:50%;object-fit:cover;border:5px solid #f1dddd}
     .profile-name{font-size:24px;font-weight:900;color:#7b5554;font-family:'Noto Serif',serif;margin-top:14px}
@@ -47,6 +48,17 @@
 
 <div class="cus-head">
     <h1 class="cus-title">Khách hàng</h1>
+    @if(request('month'))
+        <div style="font-size:13px;color:#7b5554;font-weight:700;margin-top:6px;">
+            Đang thống kê theo tháng {{ request('month') }}
+        </div>
+    @endif
+
+    @if(request('quarter'))
+        <div style="font-size:13px;color:#7b5554;font-weight:700;margin-top:6px;">
+            Đang thống kê theo quý {{ request('quarter') }}
+        </div>
+    @endif
 
     <form method="GET" action="{{ route('admin.customers.index') }}" class="filter-form">
         <input type="text"
@@ -58,6 +70,22 @@
             <option value="">Sắp xếp mặc định</option>
             <option value="booking_desc" {{ request('sort') == 'booking_desc' ? 'selected' : '' }}>Nhiều lượt sử dụng nhất</option>
             <option value="spent_desc" {{ request('sort') == 'spent_desc' ? 'selected' : '' }}>Đóng góp nhiều nhất</option>
+        </select>
+        <select name="month">
+            <option value="">Theo tháng</option>
+            @for($i=1;$i<=12;$i++)
+                <option value="{{ $i }}" {{ request('month') == $i ? 'selected' : '' }}>
+                    Tháng {{ $i }}
+                </option>
+            @endfor
+        </select>
+
+        <select name="quarter">
+            <option value="">Theo quý</option>
+            <option value="1" {{ request('quarter') == 1 ? 'selected' : '' }}>Quý 1</option>
+            <option value="2" {{ request('quarter') == 2 ? 'selected' : '' }}>Quý 2</option>
+            <option value="3" {{ request('quarter') == 3 ? 'selected' : '' }}>Quý 3</option>
+            <option value="4" {{ request('quarter') == 4 ? 'selected' : '' }}>Quý 4</option>
         </select>
 
         <button class="btn-filter">
@@ -100,7 +128,13 @@
                         <tr class="customer-row {{ $selectedCustomer && $selectedCustomer->customer_id == $customer->customer_id ? 'active' : '' }}">
                             <td>
                                 <a class="customer-link"
-                                   href="{{ route('admin.customers.index', ['customer_id' => $customer->customer_id, 'keyword' => request('keyword'), 'sort' => request('sort')]) }}">
+                                   href="{{ route('admin.customers.index', [
+                                        'customer_id' => $customer->customer_id,
+                                        'keyword' => request('keyword'),
+                                        'sort' => request('sort'),
+                                        'month' => request('month'),
+                                        'quarter' => request('quarter')
+                                    ]) }}">
                                     <div class="d-flex align-items-center gap-3">
                                         <img src="{{ $customer->avatar_url }}"
                                              class="avatar"
@@ -130,7 +164,13 @@
                             </td>
 
                             <td>
-                                <span class="pill {{ str_contains($customer->rank_label, 'VIP') ? 'pill-vip' : '' }}">
+                                <span class="pill
+                                @if($customer->rank_label == 'VIP')
+                                    pill-vip
+                                @elseif($customer->rank_label == 'Khách hàng thân thiết')
+                                    pill-loyal
+                                @endif
+                                ">
                                     {{ $customer->rank_label }}
                                 </span>
                             </td>
