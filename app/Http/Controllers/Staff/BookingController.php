@@ -228,15 +228,31 @@ class BookingController extends Controller
         return view('staff.bookings.work_history', compact('bookings'));
     }
 
-    public function scheduleRegistration()
+    public function scheduleRegistration(Request $request)
     {
         $staffId = session('staff_id');
+
+        $month = $request->month
+            ? \Carbon\Carbon::parse($request->month . '-01')
+            : now();
 
         $schedules = StaffSchedule::where('staff_id', $staffId)
             ->orderBy('work_date', 'asc')
             ->get();
 
-        return view('staff.bookings.schedule_registration', compact('schedules'));
+        $monthSchedules = StaffSchedule::where('staff_id', $staffId)
+            ->whereYear('work_date', $month->year)
+            ->whereMonth('work_date', $month->month)
+            ->get();
+
+        return view(
+            'staff.bookings.schedule_registration',
+            [
+                'schedules' => $schedules,
+                'monthSchedules' => $monthSchedules,
+                'targetDate' => $month
+            ]
+        );
     }
 
     public function storeSchedule(Request $request)

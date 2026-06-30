@@ -85,13 +85,15 @@
         };
     }
 
+    
     function scheduleStatusText($status){
         return match($status){
             'approved' => 'Đã duyệt',
             'busy' => 'Nghỉ phép',
-            default => 'Chờ duyệt',
+            default => '',
         };
     }
+    
 @endphp
 
 <div class="top-box">
@@ -364,7 +366,9 @@
                                                     }
                                                 @endphp
 
+                                                
                                                 <div class="shift-pill {{ $shiftClass }}">
+                                                
                                                     {{ $schedule->shift_name }}
                                                 </div>
 
@@ -374,9 +378,13 @@
                                                     {{ substr($schedule->end_time,0,5) }}
                                                 </div>
 
-                                                <div class="small-muted">
-                                                    {{ scheduleStatusText($schedule->status) }}
-                                                </div>
+                                                
+                                                @if($schedule->status == 'approved')
+                                                    <div class="small-muted">
+                                                        Đã duyệt
+                                                    </div>
+                                                @endif
+                                                
 
                                                 @if($schedule->status == 'available')
                                                     <form action="{{ route('admin.staffs.schedules.approve', $schedule->schedule_id) }}"
@@ -413,11 +421,19 @@
                 </table>
             </div>
 
+            
             <div class="legend">
-                <span><i class="dot dot-approved"></i> Đã duyệt</span>
-                <span><i class="dot dot-pending"></i> Chờ duyệt</span>
-                
+                <span><i class="dot" style="background:#f59e0b"></i> Ca sáng</span>
+
+                <span><i class="dot" style="background:#2563eb"></i> Ca chiều</span>
+
+                <span><i class="dot" style="background:#7c3aed"></i> Ca tối</span>
+
+                <span><i class="dot dot-approved"></i> Chờ duyệt</span>
+
+                <span><i class="dot dot-busy"></i> Nghỉ / Bận</span>
             </div>
+            
         </div>
     </section>
 </div>

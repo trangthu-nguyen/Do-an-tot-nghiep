@@ -46,25 +46,42 @@
 
     Carbon::setLocale('vi');
 
-    $today = Carbon::today();
-    $startOfMonth = $today->copy()->startOfMonth();
-    $daysInMonth = $today->daysInMonth;
+    // lấy tháng đang xem (controller truyền sang)
+    $currentDate = $targetDate ?? now();
+
+    $startOfMonth = $currentDate->copy()->startOfMonth();
+    $daysInMonth = $currentDate->daysInMonth;
 
     $scheduleByDate = $schedules->groupBy(function($item){
         return Carbon::parse($item->work_date)->format('Y-m-d');
     });
 
-    $registeredCount = $schedules->whereIn('status', ['available','approved'])->count();
-    $busyCount = $schedules->where('status', 'busy')->count();
+    $currentMonthSchedules = $monthSchedules;
 
-    $totalMinutes = $schedules->whereIn('status', ['available','approved'])->sum(function($item){
-        if(!$item->start_time || !$item->end_time) return 0;
-        return Carbon::parse($item->start_time)->diffInMinutes(Carbon::parse($item->end_time));
+    $registeredCount = $currentMonthSchedules
+        ->whereIn('status',['available','approved'])
+        ->count();
+
+    $busyCount = $currentMonthSchedules
+        ->where('status','busy')
+        ->count();
+
+    $totalMinutes = $currentMonthSchedules
+        ->whereIn('status',['available','approved'])
+        ->sum(function($item){
+
+            if(!$item->start_time || !$item->end_time){
+                return 0;
+            }
+
+            return Carbon::parse($item->start_time)
+                ->diffInMinutes(Carbon::parse($item->end_time));
     });
 
-    $totalHourText = floor($totalMinutes / 60) . 'h';
+    $totalHourText = floor($totalMinutes/60).'h';
+
     if($totalMinutes % 60 > 0){
-        $totalHourText .= ' ' . ($totalMinutes % 60) . 'p';
+        $totalHourText .= ' '.($totalMinutes % 60).'p';
     }
 @endphp
 
@@ -82,7 +99,23 @@
 
     <div>
         <div class="card-ui">
-            <div class="section-title">Lịch tháng {{ $today->format('m/Y') }}</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+
+                <a href="{{ route('staff.scheduleRegistration',['month'=>$currentDate->copy()->subMonth()->format('Y-m')]) }}"
+                class="btn btn-sm btn-outline-secondary">
+                    ← Tháng trước
+                </a>
+
+                <div class="section-title mb-0">
+                    Lịch tháng {{ $currentDate->format('m/Y') }}
+                </div>
+
+                <a href="{{ route('staff.scheduleRegistration',['month'=>$currentDate->copy()->addMonth()->format('Y-m')]) }}"
+                class="btn btn-sm btn-outline-secondary">
+                    Tháng sau →
+                </a>
+
+            </div>
 
             <div class="calendar-grid">
                 <div class="day-name">T2</div>
@@ -99,7 +132,7 @@
 
                 @for($i = 1; $i <= $daysInMonth; $i++)
                     @php
-                        $dateObj = $today->copy()->day($i);
+                        $dateObj = $currentDate->copy()->day($i);
                         $dateKey = $dateObj->format('Y-m-d');
                         $daySchedules = $scheduleByDate->get($dateKey, collect());
                         $hasBusy = $daySchedules->where('status', 'busy')->count() > 0;
